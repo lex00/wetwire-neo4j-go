@@ -449,12 +449,17 @@ func isValidIdentifier(name string) bool {
 		return false
 	}
 	for i, c := range name {
+		isLower := c >= 'a' && c <= 'z'
+		isUpper := c >= 'A' && c <= 'Z'
+		isUnderscore := c == '_'
+		isDigit := c >= '0' && c <= '9'
+
 		if i == 0 {
-			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
+			if !isLower && !isUpper && !isUnderscore {
 				return false
 			}
 		} else {
-			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
+			if !isLower && !isUpper && !isDigit && !isUnderscore {
 				return false
 			}
 		}

@@ -372,6 +372,186 @@ func TestLinter_FilterBySeverity(t *testing.T) {
 	}
 }
 
+// Test ArticleRank linting (WN4001, WN4002)
+func TestLinter_LintArticleRank(t *testing.T) {
+	l := NewLinter()
+
+	tests := []struct {
+		name          string
+		algo          *algorithms.ArticleRank
+		expectRule    string
+		expectPresent bool
+	}{
+		{
+			name:          "valid ArticleRank",
+			algo:          &algorithms.ArticleRank{DampingFactor: 0.85, MaxIterations: 20},
+			expectRule:    "WN4001",
+			expectPresent: false,
+		},
+		{
+			name:          "invalid damping factor",
+			algo:          &algorithms.ArticleRank{DampingFactor: 1.5},
+			expectRule:    "WN4001",
+			expectPresent: true,
+		},
+		{
+			name:          "negative max iterations",
+			algo:          &algorithms.ArticleRank{MaxIterations: -1},
+			expectRule:    "WN4002",
+			expectPresent: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := l.LintAlgorithm(tt.algo)
+			hasRule := containsRule(results, tt.expectRule)
+			if hasRule != tt.expectPresent {
+				t.Errorf("rule %s present = %v, want %v", tt.expectRule, hasRule, tt.expectPresent)
+			}
+		})
+	}
+}
+
+// Test Node2Vec linting (WN4006)
+func TestLinter_LintNode2Vec(t *testing.T) {
+	l := NewLinter()
+
+	tests := []struct {
+		name        string
+		algo        *algorithms.Node2Vec
+		expectWarn  bool
+	}{
+		{
+			name:       "valid dimension 64",
+			algo:       &algorithms.Node2Vec{EmbeddingDimension: 64},
+			expectWarn: false,
+		},
+		{
+			name:       "valid dimension 128",
+			algo:       &algorithms.Node2Vec{EmbeddingDimension: 128},
+			expectWarn: false,
+		},
+		{
+			name:       "non-power of 2",
+			algo:       &algorithms.Node2Vec{EmbeddingDimension: 100},
+			expectWarn: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := l.LintAlgorithm(tt.algo)
+			hasWarn := containsRule(results, "WN4006")
+			if hasWarn != tt.expectWarn {
+				t.Errorf("WN4006 warning = %v, want %v", hasWarn, tt.expectWarn)
+			}
+		})
+	}
+}
+
+// Test KNN linting (WN4007)
+func TestLinter_LintKNN(t *testing.T) {
+	l := NewLinter()
+
+	tests := []struct {
+		name       string
+		algo       *algorithms.KNN
+		expectWarn bool
+	}{
+		{
+			name:       "valid K",
+			algo:       &algorithms.KNN{K: 10},
+			expectWarn: false,
+		},
+		{
+			name:       "high K",
+			algo:       &algorithms.KNN{K: 2000},
+			expectWarn: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := l.LintAlgorithm(tt.algo)
+			hasWarn := containsRule(results, "WN4007")
+			if hasWarn != tt.expectWarn {
+				t.Errorf("WN4007 warning = %v, want %v", hasWarn, tt.expectWarn)
+			}
+		})
+	}
+}
+
+// Test FormatResults
+func TestLinter_FormatResults(t *testing.T) {
+	results := []LintResult{
+		{Rule: "WN4001", Severity: Error, Message: "damping factor invalid", Location: "PageRank.DampingFactor"},
+		{Rule: "WN4006", Severity: Warning, Message: "dimension not power of 2", Location: "FastRP.EmbeddingDimension"},
+	}
+
+	output := FormatResults(results)
+
+	if output == "" {
+		t.Error("FormatResults returned empty string")
+	}
+
+	// Check that results are formatted
+	if !contains(output, "WN4001") {
+		t.Error("FormatResults should include rule WN4001")
+	}
+	if !contains(output, "WN4006") {
+		t.Error("FormatResults should include rule WN4006")
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// Test split config validation (WN4031: test_fraction must be < 1.0)
+func TestLinter_WN4031_SplitConfig(t *testing.T) {
+	l := NewLinter()
+
+	tests := []struct {
+		name        string
+		testFrac    float64
+		expectError bool
+	}{
+		{"valid 0.2", 0.2, false},
+		{"valid 0.0", 0.0, false},    // 0 is allowed (uses default)
+		{"invalid 1", 1.0, true},
+		{"invalid > 1", 1.5, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &pipelines.NodeClassificationPipeline{
+				BasePipeline: pipelines.BasePipeline{
+					Name:   "test",
+					Models: []pipelines.Model{&pipelines.LogisticRegression{}},
+				},
+				SplitConfig: pipelines.SplitConfig{
+					TestFraction: tt.testFrac,
+				},
+			}
+			results := l.LintPipeline(pipeline)
+			hasError := containsRule(results, "WN4031")
+			if hasError != tt.expectError {
+				t.Errorf("WN4031 error = %v, want %v", hasError, tt.expectError)
+			}
+		})
+	}
+}
+
 // Helper function
 func containsRule(results []LintResult, rule string) bool {
 	for _, r := range results {
