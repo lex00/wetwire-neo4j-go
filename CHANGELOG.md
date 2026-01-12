@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CLI command tests in `cmd/neo4j`
+  - Tests for list, validate, import, graph, version commands
+  - Tests for command flags and execution
+  - 14 test functions covering CLI layer
+  - Updated wetwire-core-go dependency to v1.5.0
+
 - Validator implementing `cmd.Validator` interface in `internal/cli`
   - `Validator` type satisfies wetwire-core-go interface pattern
   - Uses environment variables for configuration (NEO4J_URI, NEO4J_USERNAME, etc.)
