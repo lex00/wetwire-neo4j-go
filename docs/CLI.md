@@ -90,6 +90,60 @@ See [LINT_RULES.md](LINT_RULES.md) for a complete list of lint rules.
 
 ---
 
+### init
+
+Initialize a new Neo4j/GDS project with scaffolded definitions.
+
+```bash
+neo4j init <project-name> [flags]
+```
+
+**Arguments:**
+- `project-name` - Name of the project directory to create
+
+**Flags:**
+- `--template` - Project template: `default`, `gds`, `graphrag`, `full` (default: default)
+- `--force` - Overwrite existing directory
+
+**Templates:**
+- `default` - Basic schema definitions (NodeType, RelationshipType)
+- `gds` - GDS-focused project (schema + algorithms + pipelines)
+- `graphrag` - GraphRAG project (schema + retrievers + kg pipelines)
+- `full` - Complete project with all definition types
+
+**Example:**
+```bash
+# Create a basic project
+neo4j init my-graph-project
+
+# Create a GDS analytics project
+neo4j init analytics-project --template gds
+
+# Create a GraphRAG project
+neo4j init rag-project --template graphrag
+
+# Overwrite existing directory
+neo4j init existing-project --force
+```
+
+**Generated Structure:**
+```
+my-graph-project/
+├── main.go
+├── schema/
+│   └── schema.go
+├── algorithms/
+│   └── algorithms.go  (gds, full templates)
+├── pipelines/
+│   └── pipelines.go   (gds, full templates)
+├── retrievers/
+│   └── retrievers.go  (graphrag, full templates)
+└── kg/
+    └── kg.go          (graphrag, full templates)
+```
+
+---
+
 ### list
 
 List all discovered definitions in a directory.

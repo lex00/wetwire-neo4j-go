@@ -4,6 +4,7 @@
 //
 //	wetwire-neo4j build        - Build Cypher/JSON from definitions
 //	wetwire-neo4j lint         - Lint definitions for issues
+//	wetwire-neo4j init         - Initialize a new project
 //	wetwire-neo4j list         - List discovered definitions
 //	wetwire-neo4j validate     - Validate against live Neo4j instance
 //	wetwire-neo4j import       - Import schemas from Neo4j or Cypher files
@@ -42,10 +43,12 @@ func run() error {
 	// Create implementations
 	builder := cli.NewBuilder()
 	linter := cli.NewLinter()
+	initializer := cli.NewInitializer()
 
 	// Add commands
 	rootCmd.AddCommand(cmd.NewBuildCommand(builder))
 	rootCmd.AddCommand(cmd.NewLintCommand(linter))
+	rootCmd.AddCommand(cmd.NewInitCommand(initializer))
 	rootCmd.AddCommand(newListCommand())
 	rootCmd.AddCommand(newValidateCommand())
 	rootCmd.AddCommand(newImportCommand())
