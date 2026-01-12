@@ -208,9 +208,9 @@ func handleMCPBuild(ctx context.Context, args map[string]any) (string, error) {
 	err := builder.Build(ctx, path, opts)
 
 	// Restore stdout
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 
 	if err != nil {
 		result.Errors = append(result.Errors, err.Error())
@@ -292,17 +292,14 @@ func handleMCPValidate(_ context.Context, args map[string]any) (string, error) {
 }
 
 // handleMCPList lists discovered Neo4j definitions.
+// Note: format parameter is accepted but output is always JSON for MCP transport.
 func handleMCPList(_ context.Context, args map[string]any) (string, error) {
 	path, _ := args["path"].(string)
-	format, _ := args["format"].(string)
 
 	result := MCPListResult{}
 
 	if path == "" {
 		path = "."
-	}
-	if format == "" {
-		format = "table"
 	}
 
 	// Discover resources
