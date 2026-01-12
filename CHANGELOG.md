@@ -90,6 +90,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Schema generation for LLM extraction prompts
   - Full test coverage (22 test functions)
 
+- Lint rules for Neo4j definitions in `internal/lint`
+  - WN4001: dampingFactor must be in [0, 1)
+  - WN4002: maxIterations must be positive
+  - WN4005: tolerance warning if too loose
+  - WN4006: embeddingDimension should be power of 2
+  - WN4007: topK warning if > 1000
+  - WN4032: pipeline requires at least one model
+  - WN4040: KG pipeline requires entity types
+  - WN4043: entity resolver threshold warning
+  - WN4052: node labels should be PascalCase
+  - WN4053: relationship types should be SCREAMING_SNAKE_CASE
+  - `Linter` with LintAlgorithm, LintPipeline, LintKGPipeline
+  - HasErrors, FilterBySeverity, FormatResults utilities
+  - Full test coverage (15 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
