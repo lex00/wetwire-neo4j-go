@@ -46,6 +46,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for stream, stats, mutate, and write execution modes
   - Full test coverage (30+ test functions)
 
+- GDS ML pipeline configurations in `internal/pipelines`
+  - `NodeClassificationPipeline` for categorical label prediction
+  - `LinkPredictionPipeline` for relationship prediction
+  - `NodeRegressionPipeline` for numeric property prediction
+  - Feature steps: FastRP, PageRank, Degree, Node2Vec, Scaler
+  - Models: LogisticRegression, RandomForest, MLP, LinearRegression
+  - `PipelineSerializer` for Cypher pipeline creation and training commands
+  - JSON/Map export for pipeline configurations
+  - Support for split config and auto-tuning
+  - Full test coverage (18 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
