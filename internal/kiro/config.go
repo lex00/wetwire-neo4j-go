@@ -65,7 +65,10 @@ Your role is to help users design and generate Neo4j schemas, algorithms, and co
 - Use proper type constants (schema.TypeString, schema.TypeInteger, etc.)`
 
 // MCPCommand is the command to run the MCP server.
-const MCPCommand = "wetwire-neo4j-mcp"
+const MCPCommand = "wetwire-neo4j"
+
+// MCPArgs are the arguments to pass to the MCP command.
+var MCPArgs = []string{"mcp"}
 
 // NewConfig creates a new Kiro config for the wetwire-neo4j agent.
 func NewConfig() corekiro.Config {
@@ -74,6 +77,7 @@ func NewConfig() corekiro.Config {
 		AgentName:   AgentName,
 		AgentPrompt: AgentPrompt,
 		MCPCommand:  MCPCommand,
+		MCPArgs:     MCPArgs,
 		WorkDir:     workDir,
 	}
 }

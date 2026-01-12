@@ -167,6 +167,16 @@ golangci-lint run ./... # Run linter
 go build ./...          # Build all packages
 ```
 
+## Kiro CLI and MCP Integration
+
+wetwire-neo4j integrates with Kiro CLI for AI-assisted schema design:
+
+- **MCP Server**: Available as `wetwire-neo4j mcp` subcommand (NOT a standalone binary)
+- **Design Command**: `wetwire-neo4j design --provider kiro` auto-configures Kiro agent
+- **MCP Tools**: `wetwire_init`, `wetwire_lint`, `wetwire_build`
+
+See [docs/NEO4J-KIRO-CLI.md](docs/NEO4J-KIRO-CLI.md) for full integration guide.
+
 ## Dependencies
 
 - `github.com/lex00/wetwire-core-go` - Core infrastructure (MCP server, CLI utilities)
@@ -177,4 +187,5 @@ go build ./...          # Build all packages
 - [Neo4j GDS Documentation](https://neo4j.com/docs/graph-data-science/current/)
 - [neo4j-graphrag-python](https://github.com/neo4j/neo4j-graphrag-python)
 - [wetwire-core-go](https://github.com/lex00/wetwire-core-go)
+- [Kiro CLI Integration](docs/NEO4J-KIRO-CLI.md)
 - [ROADMAP](https://github.com/lex00/wetwire-neo4j-go/issues/18)
