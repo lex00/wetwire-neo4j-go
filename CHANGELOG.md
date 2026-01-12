@@ -57,6 +57,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for split config and auto-tuning
   - Full test coverage (18 test functions)
 
+- GDS graph projection configurations in `internal/projections`
+  - `NativeProjection` for projecting node labels and relationship types
+  - `CypherProjection` for custom Cypher-based projections
+  - `DataFrameProjection` for Aura Analytics integration
+  - `NodeProjection` and `RelationshipProjection` for detailed configuration
+  - Orientation options: NATURAL, REVERSE, UNDIRECTED
+  - Aggregation options: NONE, SUM, MIN, MAX, SINGLE, COUNT
+  - `ProjectionSerializer` for Cypher generation and JSON export
+  - Graph management utilities: DropGraph, GraphExists, ListGraphs
+  - Full test coverage (19 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
