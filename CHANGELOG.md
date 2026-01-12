@@ -120,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `wetwire-neo4j list` - List discovered definitions
   - `wetwire-neo4j validate` - Validate against live Neo4j instance
   - `wetwire-neo4j import` - Import schemas from Cypher files or Neo4j
+  - `wetwire-neo4j graph` - Visualize resource dependencies (DOT, Mermaid)
   - `wetwire-neo4j version` - Show version information
 
 - External validation in `internal/validator`
@@ -148,7 +149,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integration tests validating all examples
 
 - Documentation
+  - `CLAUDE.md` - AI assistant guidelines
   - `docs/CLI.md` - CLI command reference
+  - `docs/FAQ.md` - Frequently asked questions
+  - `docs/QUICK_START.md` - Getting started guide
   - `docs/LINT_RULES.md` - WN4xxx lint rule documentation
   - Updated `README.md` with architecture and quick start
 
