@@ -5,6 +5,8 @@
 //	wetwire-neo4j build        - Build Cypher/JSON from definitions
 //	wetwire-neo4j lint         - Lint definitions for issues
 //	wetwire-neo4j list         - List discovered definitions
+//	wetwire-neo4j validate     - Validate against live Neo4j instance
+//	wetwire-neo4j import       - Import schemas from Neo4j or Cypher files
 //	wetwire-neo4j version      - Show version information
 package main
 
@@ -44,6 +46,8 @@ func run() error {
 	rootCmd.AddCommand(cmd.NewBuildCommand(builder))
 	rootCmd.AddCommand(cmd.NewLintCommand(linter))
 	rootCmd.AddCommand(newListCommand())
+	rootCmd.AddCommand(newValidateCommand())
+	rootCmd.AddCommand(newImportCommand())
 	rootCmd.AddCommand(newVersionCommand())
 
 	return rootCmd.Execute()
@@ -74,6 +78,90 @@ Supported definition types:
 
 	cmd.Flags().StringVarP(&path, "path", "p", ".", "Path to source definitions")
 	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
+
+	return cmd
+}
+
+func newValidateCommand() *cobra.Command {
+	var path string
+	var uri string
+	var username string
+	var password string
+	var database string
+	var dryRun bool
+
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validate configurations against a live Neo4j instance",
+		Long: `Validate discovers Neo4j configurations and validates them against a live Neo4j instance.
+
+This checks that:
+- Node labels and relationship types exist in the database
+- GDS algorithms are available
+- Graph projections reference valid labels and types`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			validator := cli.NewValidatorCLI()
+
+			if dryRun {
+				return validator.ValidateDryRun(path, cmd.OutOrStdout())
+			}
+
+			config := validator.ParseConfig(uri, username, password, database)
+			return validator.ValidateWithConfig(path, config, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().StringVarP(&path, "path", "p", ".", "Path to source definitions")
+	cmd.Flags().StringVar(&uri, "uri", "", "Neo4j connection URI (or $NEO4J_URI)")
+	cmd.Flags().StringVar(&username, "username", "neo4j", "Neo4j username (or $NEO4J_USERNAME)")
+	cmd.Flags().StringVar(&password, "password", "", "Neo4j password (or $NEO4J_PASSWORD)")
+	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "List discovered resources without validating")
+
+	return cmd
+}
+
+func newImportCommand() *cobra.Command {
+	var file string
+	var uri string
+	var username string
+	var password string
+	var database string
+	var packageName string
+	var output string
+
+	cmd := &cobra.Command{
+		Use:   "import",
+		Short: "Import schemas from Neo4j or Cypher files",
+		Long: `Import generates Go code from existing Neo4j schemas.
+
+Sources:
+- Cypher file containing CREATE CONSTRAINT/INDEX statements
+- Live Neo4j database
+
+The generated Go code uses wetwire-neo4j-go schema types.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			importer := cli.NewImporterCLI()
+
+			if output != "" {
+				return importer.ImportToFile(file, uri, username, password, database, packageName, output)
+			}
+
+			if file != "" {
+				return importer.ImportFromCypher(file, packageName, cmd.OutOrStdout())
+			}
+
+			return importer.ImportFromNeo4j(uri, username, password, database, packageName, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().StringVarP(&file, "file", "f", "", "Cypher file to import from")
+	cmd.Flags().StringVar(&uri, "uri", "", "Neo4j connection URI (or $NEO4J_URI)")
+	cmd.Flags().StringVar(&username, "username", "neo4j", "Neo4j username")
+	cmd.Flags().StringVar(&password, "password", "", "Neo4j password")
+	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
+	cmd.Flags().StringVar(&packageName, "package", "schema", "Go package name for generated code")
+	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file path (default: stdout)")
 
 	return cmd
 }
