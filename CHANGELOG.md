@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Skips test files and vendor directories
   - Full test coverage (20+ test functions)
 
+- Serializer system in `internal/serializer`
+  - `CypherSerializer` for generating Cypher constraint and index statements
+  - Supports UNIQUE, EXISTS, NODE_KEY, REL_KEY constraints
+  - Supports BTREE, TEXT, FULLTEXT, POINT, VECTOR indexes
+  - Template-based Cypher generation with proper escaping
+  - `JSONSerializer` for schema export to JSON format
+  - `NodeTypeToMap` and `RelationshipTypeToMap` for flexible serialization
+  - Full test coverage (26 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
