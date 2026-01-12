@@ -1,5 +1,10 @@
 # wetwire-neo4j-go
 
+[![CI](https://github.com/lex00/wetwire-neo4j-go/actions/workflows/ci.yml/badge.svg)](https://github.com/lex00/wetwire-neo4j-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/lex00/wetwire-neo4j-go.svg)](https://pkg.go.dev/github.com/lex00/wetwire-neo4j-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lex00/wetwire-neo4j-go)](https://goreportcard.com/report/github.com/lex00/wetwire-neo4j-go)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Neo4j configuration synthesis for Go - type-safe declarations that compile to Cypher and JSON configurations.
 
 ## Overview
