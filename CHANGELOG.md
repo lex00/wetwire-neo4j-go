@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Init command implementing `cmd.Initializer` interface in `internal/cli`
+  - `wetwire-neo4j init <project-name>` creates new project scaffold
+  - Templates: default, gds, graphrag, full
+  - Generates schema, algorithms, pipelines, retrievers, kg directories
+  - `--force` flag to overwrite existing directories
+  - `--template` flag to select project template
+  - Full test coverage (6 test functions)
+
 - Aura Graph Analytics session configuration in `internal/aura`
   - `Session` struct for Aura Analytics serverless GDS sessions
   - `PandasDataSource` for loading data from CSV files via pandas
