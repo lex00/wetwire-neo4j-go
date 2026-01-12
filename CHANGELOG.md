@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Aura Graph Analytics session configuration in `internal/aura`
+  - `Session` struct for Aura Analytics serverless GDS sessions
+  - `PandasDataSource` for loading data from CSV files via pandas
+  - `SnowflakeDataSource` for loading data from Snowflake
+  - `BigQueryDataSource` for loading data from Google BigQuery
+  - `Serializer` for generating Python graphdatascience client code
+  - JSON/Map export for session configurations
+  - Session validation (name, TTL, data source requirements)
+  - Full test coverage (7 test functions)
+
 - Schema definition system in `pkg/neo4j/schema`
   - `NodeType` struct for defining node labels with properties, constraints, and indexes
   - `RelationshipType` struct for defining relationships with source/target and cardinality
