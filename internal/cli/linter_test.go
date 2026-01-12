@@ -252,12 +252,12 @@ func TestLinter_LintRelationshipType(t *testing.T) {
 	}{
 		{
 			name:        "SCREAMING_SNAKE_CASE",
-			rel:         &schema.RelationshipType{Label: "WORKS_FOR"},
+			rel:         &schema.RelationshipType{Label: "WORKS_FOR", Source: "Person", Target: "Company"},
 			expectIssue: false,
 		},
 		{
 			name:        "camelCase",
-			rel:         &schema.RelationshipType{Label: "worksFor"},
+			rel:         &schema.RelationshipType{Label: "worksFor", Source: "Person", Target: "Company"},
 			expectIssue: true,
 		},
 	}
