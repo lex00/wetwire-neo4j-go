@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Validator implementing `cmd.Validator` interface in `internal/cli`
+  - `Validator` type satisfies wetwire-core-go interface pattern
+  - Uses environment variables for configuration (NEO4J_URI, NEO4J_USERNAME, etc.)
+  - Returns `cmd.ValidationError` slice for consistent error handling
+  - Complements existing `ValidatorCLI` for custom validate command
+  - Full test coverage (4 test functions)
+
 - Init command implementing `cmd.Initializer` interface in `internal/cli`
   - `wetwire-neo4j init <project-name>` creates new project scaffold
   - Templates: default, gds, graphrag, full
