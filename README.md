@@ -38,29 +38,29 @@ package schema
 
 import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 
-// Person node type with constraints
-var Person = &schema.NodeType{
+// PersonNode defines a Person node type with constraints.
+var PersonNode = &schema.NodeType{
     Label: "Person",
     Properties: []schema.Property{
-        {Name: "id", Type: schema.TypeString, Required: true},
-        {Name: "name", Type: schema.TypeString, Required: true},
-        {Name: "email", Type: schema.TypeString},
+        {Name: "id", Type: schema.STRING, Required: true},
+        {Name: "name", Type: schema.STRING, Required: true},
+        {Name: "email", Type: schema.STRING},
     },
     Constraints: []schema.Constraint{
-        {Type: schema.Unique, Properties: []string{"id"}},
+        {Name: "person_id_unique", Type: schema.UNIQUE, Properties: []string{"id"}},
     },
     Indexes: []schema.Index{
-        {Type: schema.RangeIndex, Properties: []string{"name"}},
+        {Name: "person_name_idx", Type: schema.BTREE, Properties: []string{"name"}},
     },
 }
 
-// WORKS_FOR relationship
-var WorksFor = &schema.RelationshipType{
+// WorksForRelationship defines the WORKS_FOR relationship.
+var WorksForRelationship = &schema.RelationshipType{
     Label:  "WORKS_FOR",
     Source: "Person",
     Target: "Company",
     Properties: []schema.Property{
-        {Name: "since", Type: schema.TypeDate},
+        {Name: "since", Type: schema.DATE},
     },
 }
 ```
