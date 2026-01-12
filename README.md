@@ -166,6 +166,57 @@ RETURN p.name, c.name, w.role
 
 The Go schema acts as a **contract** - if it passes `wetwire-neo4j lint`, the agent can trust every label, relationship type, and property name is exactly as defined. This produces more consistent and correct Cypher than having agents work from JSON or documentation.
 
+## Import from Existing Database
+
+Already have a Neo4j database? Import your existing constraints and indexes to bootstrap your schema:
+
+### From a Live Database
+
+```bash
+wetwire-neo4j import --uri bolt://localhost:7687 --password secret -o schema/generated.go
+```
+
+### From a Cypher File
+
+```bash
+wetwire-neo4j import --file ./constraints.cypher -o schema/generated.go
+```
+
+### Example
+
+Given these existing constraints:
+
+```cypher
+CREATE CONSTRAINT person_id FOR (p:Person) REQUIRE p.id IS UNIQUE;
+CREATE INDEX person_name FOR (p:Person) ON (p.name);
+CREATE CONSTRAINT company_name FOR (c:Company) REQUIRE c.name IS UNIQUE;
+```
+
+The import command generates:
+
+```go
+package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+var Person = &schema.NodeType{
+    Label: "Person",
+    Properties: []schema.Property{
+        {Name: "id", Type: schema.STRING, Required: true, Unique: true},
+        {Name: "name", Type: schema.STRING},
+    },
+}
+
+var Company = &schema.NodeType{
+    Label: "Company",
+    Properties: []schema.Property{
+        {Name: "name", Type: schema.STRING, Required: true, Unique: true},
+    },
+}
+```
+
+After importing, you can add relationship definitions, cardinality, and GoDoc comments to complete your schema.
+
 ## Commands
 
 | Command | Description |
