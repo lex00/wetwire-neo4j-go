@@ -273,3 +273,232 @@ func TestMockValidator_RelationshipTypeExists(t *testing.T) {
 		}
 	}
 }
+
+func TestFormatResults_Mixed(t *testing.T) {
+	results := []ValidationResult{
+		{Type: "schema", Target: "NodeType(Person)", Valid: true, Message: "label exists"},
+		{Type: "algorithm", Target: "PageRank", Valid: false, Message: "GDS not installed"},
+		{Type: "projection", Target: "my-graph", Valid: true, Message: "projection valid"},
+	}
+
+	output := FormatResults(results)
+
+	// Check all results are formatted
+	if output == "" {
+		t.Error("expected non-empty output")
+	}
+
+	// Check status indicators
+	if !contains(output, "✓") {
+		t.Error("expected checkmark for valid results")
+	}
+	if !contains(output, "✗") {
+		t.Error("expected X for invalid results")
+	}
+
+	// Check targets are included
+	if !contains(output, "NodeType(Person)") {
+		t.Error("expected NodeType(Person) in output")
+	}
+	if !contains(output, "PageRank") {
+		t.Error("expected PageRank in output")
+	}
+}
+
+func TestFilterInvalid_AllValid(t *testing.T) {
+	results := []ValidationResult{
+		{Valid: true, Target: "a"},
+		{Valid: true, Target: "b"},
+		{Valid: true, Target: "c"},
+	}
+
+	invalid := FilterInvalid(results)
+	if len(invalid) != 0 {
+		t.Errorf("expected 0 invalid results, got %d", len(invalid))
+	}
+}
+
+func TestFilterInvalid_AllInvalid(t *testing.T) {
+	results := []ValidationResult{
+		{Valid: false, Target: "a"},
+		{Valid: false, Target: "b"},
+	}
+
+	invalid := FilterInvalid(results)
+	if len(invalid) != 2 {
+		t.Errorf("expected 2 invalid results, got %d", len(invalid))
+	}
+}
+
+func TestFilterInvalid_Empty(t *testing.T) {
+	var results []ValidationResult
+
+	invalid := FilterInvalid(results)
+	if len(invalid) != 0 {
+		t.Errorf("expected 0 results, got %d", len(invalid))
+	}
+}
+
+func TestHasErrors_Empty(t *testing.T) {
+	var results []ValidationResult
+
+	if HasErrors(results) {
+		t.Error("HasErrors should return false for empty results")
+	}
+}
+
+func TestValidationResult_Details(t *testing.T) {
+	r := ValidationResult{
+		Type:    "schema",
+		Target:  "Test",
+		Valid:   true,
+		Message: "test message",
+		Details: map[string]any{
+			"exists":      true,
+			"count":       42,
+			"name":        "test",
+			"nested":      map[string]any{"key": "value"},
+		},
+	}
+
+	// Test details access
+	if _, ok := r.Details["exists"]; !ok {
+		t.Error("expected exists key in details")
+	}
+	if count, ok := r.Details["count"].(int); !ok || count != 42 {
+		t.Error("expected count to be 42")
+	}
+	if name, ok := r.Details["name"].(string); !ok || name != "test" {
+		t.Error("expected name to be 'test'")
+	}
+}
+
+func TestConfig_AllFields(t *testing.T) {
+	config := Config{
+		URI:      "neo4j+s://example.com:7687",
+		Username: "admin",
+		Password: "secret123",
+		Database: "mydb",
+	}
+
+	if config.URI != "neo4j+s://example.com:7687" {
+		t.Errorf("URI = %s, want neo4j+s://example.com:7687", config.URI)
+	}
+	if config.Username != "admin" {
+		t.Errorf("Username = %s, want admin", config.Username)
+	}
+	if config.Password != "secret123" {
+		t.Errorf("Password = %s, want secret123", config.Password)
+	}
+	if config.Database != "mydb" {
+		t.Errorf("Database = %s, want mydb", config.Database)
+	}
+}
+
+func TestGDSInfo_NotInstalled(t *testing.T) {
+	info := GDSInfo{
+		Installed: false,
+	}
+
+	if info.Installed {
+		t.Error("expected Installed to be false")
+	}
+	if info.Version != "" {
+		t.Errorf("Version should be empty, got %s", info.Version)
+	}
+	if info.Edition != "" {
+		t.Errorf("Edition should be empty, got %s", info.Edition)
+	}
+}
+
+func TestDatabaseInfo_Empty(t *testing.T) {
+	info := DatabaseInfo{}
+
+	if len(info.NodeLabels) != 0 {
+		t.Errorf("expected 0 node labels, got %d", len(info.NodeLabels))
+	}
+	if len(info.RelationshipTypes) != 0 {
+		t.Errorf("expected 0 relationship types, got %d", len(info.RelationshipTypes))
+	}
+}
+
+func TestMockValidator_LabelExists(t *testing.T) {
+	dbInfo := &DatabaseInfo{
+		NodeLabels: []string{"Person", "Company", "Location"},
+	}
+	gdsInfo := &GDSInfo{Installed: true}
+
+	m := NewMockValidator(dbInfo, gdsInfo)
+
+	tests := []struct {
+		label string
+		want  bool
+	}{
+		{"Person", true},
+		{"Company", true},
+		{"Location", true},
+		{"Unknown", false},
+		{"", false},
+		{"person", false}, // case sensitive
+	}
+
+	for _, tt := range tests {
+		got := m.labelExists(tt.label)
+		if got != tt.want {
+			t.Errorf("labelExists(%s) = %v, want %v", tt.label, got, tt.want)
+		}
+	}
+}
+
+func TestValidationResult_TypeValues(t *testing.T) {
+	types := []string{"schema", "algorithm", "projection"}
+
+	for _, typ := range types {
+		r := ValidationResult{Type: typ}
+		if r.Type != typ {
+			t.Errorf("Type = %s, want %s", r.Type, typ)
+		}
+	}
+}
+
+func TestFormatResults_SingleValid(t *testing.T) {
+	results := []ValidationResult{
+		{Type: "schema", Target: "Test", Valid: true, Message: "passed"},
+	}
+
+	output := FormatResults(results)
+	if !contains(output, "✓") {
+		t.Error("expected checkmark in output")
+	}
+	if contains(output, "✗") {
+		t.Error("should not contain X for valid-only results")
+	}
+}
+
+func TestFormatResults_SingleInvalid(t *testing.T) {
+	results := []ValidationResult{
+		{Type: "schema", Target: "Test", Valid: false, Message: "failed"},
+	}
+
+	output := FormatResults(results)
+	if contains(output, "✓") {
+		t.Error("should not contain checkmark for invalid-only results")
+	}
+	if !contains(output, "✗") {
+		t.Error("expected X in output")
+	}
+}
+
+// Helper function
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
