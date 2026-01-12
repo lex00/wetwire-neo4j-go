@@ -57,6 +57,7 @@ func run() error {
 	rootCmd.AddCommand(newGraphCommand())
 	rootCmd.AddCommand(newDesignCmd())
 	rootCmd.AddCommand(newTestCmd())
+	rootCmd.AddCommand(newMCPCommand())
 	rootCmd.AddCommand(newVersionCommand())
 
 	return rootCmd.Execute()
@@ -201,6 +202,18 @@ The graph shows:
 	cmd.Flags().StringVarP(&format, "format", "f", "dot", "Output format (dot, mermaid)")
 
 	return cmd
+}
+
+func newMCPCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:    "mcp",
+		Short:  "Run MCP server on stdio",
+		Long:   `Run the Model Context Protocol server on stdio transport.`,
+		Hidden: true, // Hidden from help, used by Kiro
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runMCPServer()
+		},
+	}
 }
 
 func newVersionCommand() *cobra.Command {

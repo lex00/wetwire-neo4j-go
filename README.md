@@ -5,23 +5,29 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/lex00/wetwire-neo4j-go)](https://goreportcard.com/report/github.com/lex00/wetwire-neo4j-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Neo4j configuration synthesis for Go - type-safe declarations that compile to Cypher and JSON configurations.
+Type-safe Neo4j schema definitions for AI-assisted Cypher generation.
 
 ## Overview
 
-wetwire-neo4j-go is a **synthesis library** for Neo4j that goes beyond Cypher queries. Define your Neo4j configurations in native Go and compile them to Cypher statements and JSON configurations.
+wetwire-neo4j-go lets you define your Neo4j schema in type-safe Go, then use AI agents (Claude, Kiro, etc.) to generate correct Cypher queries. The Go schema acts as a validated contract that agents can read to understand your database structure.
 
-**Supported configurations:**
+```
+Define Schema (Go) → Validate (lint) → Agent Reads Schema → Generates Correct Cypher
+```
 
-- **Schema Definitions** - Node types, relationships, constraints, indexes
-- **GDS Algorithms** - PageRank, Louvain, FastRP, Node2Vec, KNN, Dijkstra, and more
+**Why this approach?**
+
+- **Type-safe schema** - Compiler and linter catch errors before agents see them
+- **Rich context** - GoDoc comments, cardinality, constraints inform query generation
+- **Consistent results** - Agents generate correct label/relationship names every time
+- **Single source of truth** - Schema is version-controlled, reviewable Go code
+
+**Also supports:**
+
+- **GDS Algorithms** - PageRank, Louvain, FastRP, Node2Vec, KNN, Dijkstra
 - **ML Pipelines** - Node classification, link prediction, node regression
 - **GraphRAG** - Retrievers, knowledge graph construction, entity resolution
 - **Graph Projections** - Native and Cypher projections for GDS
-
-```
-Go Structs → wetwire-neo4j build → Cypher + JSON → Neo4j / GDS / GraphRAG APIs
-```
 
 ## Installation
 
@@ -31,130 +37,134 @@ go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
 
 ## Quick Start
 
-### 1. Define Schema
+wetwire-neo4j-go lets you define your Neo4j schema in type-safe Go, then use AI agents to generate Cypher queries that are consistent and correct.
 
+### The Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. Define your schema in Go (once)                         │
+│     schema/nodes.go, schema/relationships.go                │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. Validate with lint                                      │
+│     wetwire-neo4j lint ./schema/                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. Ask the agent for queries                               │
+│     "Read schema/ and find people at tech companies"        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. Get correct Cypher                                      │
+│     MATCH (p:Person)-[:WORKS_FOR]->(c:Company)              │
+│     WHERE c.industry = 'tech' RETURN p.name, c.name         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 1. Define Your Schema
+
+Create a `schema/` package with your node and relationship definitions:
+
+**schema/nodes.go**
 ```go
 package schema
 
 import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 
-// PersonNode defines a Person node type with constraints.
-var PersonNode = &schema.NodeType{
-    Label: "Person",
-    Properties: []schema.Property{
-        {Name: "id", Type: schema.STRING, Required: true},
-        {Name: "name", Type: schema.STRING, Required: true},
-        {Name: "email", Type: schema.STRING},
-    },
-    Constraints: []schema.Constraint{
-        {Name: "person_id_unique", Type: schema.UNIQUE, Properties: []string{"id"}},
-    },
-    Indexes: []schema.Index{
-        {Name: "person_name_idx", Type: schema.BTREE, Properties: []string{"name"}},
-    },
-}
-
-// WorksForRelationship defines the WORKS_FOR relationship.
-var WorksForRelationship = &schema.RelationshipType{
-    Label:  "WORKS_FOR",
-    Source: "Person",
-    Target: "Company",
-    Properties: []schema.Property{
-        {Name: "since", Type: schema.DATE},
-    },
-}
-```
-
-### 2. Define Algorithms
-
-```go
-package algorithms
-
-import "github.com/lex00/wetwire-neo4j-go/internal/algorithms"
-
-// PageRank configuration
-var InfluenceScore = &algorithms.PageRank{
-    BaseAlgorithm: algorithms.BaseAlgorithm{
-        GraphName: "social-network",
-        Mode:      algorithms.Stream,
-    },
-    DampingFactor: 0.85,
-    MaxIterations: 20,
-}
-
-// Community detection with Louvain
-var Communities = &algorithms.Louvain{
-    BaseAlgorithm: algorithms.BaseAlgorithm{
-        GraphName: "social-network",
-        Mode:      algorithms.Mutate,
-    },
-    MutateProperty: "communityId",
-}
-```
-
-### 3. Build and Validate
-
-```bash
-# Generate Cypher
-neo4j build ./schema/
-
-# Lint configurations
-neo4j lint ./schema/
-
-# Validate against live Neo4j
-neo4j validate --uri bolt://localhost:7687
-```
-
-## Import from Existing Database
-
-Already have a Neo4j database? Import your existing constraints and indexes to bootstrap your schema:
-
-### From a Live Database
-
-```bash
-wetwire-neo4j import --uri bolt://localhost:7687 --password secret -o schema/generated.go
-```
-
-### From a Cypher File
-
-```bash
-wetwire-neo4j import --file ./constraints.cypher -o schema/generated.go
-```
-
-### Example
-
-Given these existing constraints:
-
-```cypher
-CREATE CONSTRAINT person_id FOR (p:Person) REQUIRE p.id IS UNIQUE;
-CREATE INDEX person_name FOR (p:Person) ON (p.name);
-CREATE CONSTRAINT company_name FOR (c:Company) REQUIRE c.name IS UNIQUE;
-```
-
-The import command generates:
-
-```go
-package schema
-
-import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
-
+// Person represents an individual in the system.
 var Person = &schema.NodeType{
     Label: "Person",
     Properties: []schema.Property{
         {Name: "id", Type: schema.STRING, Required: true, Unique: true},
-        {Name: "name", Type: schema.STRING},
+        {Name: "name", Type: schema.STRING, Required: true},
+        {Name: "email", Type: schema.STRING, Unique: true},
+        {Name: "age", Type: schema.INTEGER},
     },
 }
 
+// Company represents an organization.
 var Company = &schema.NodeType{
     Label: "Company",
     Properties: []schema.Property{
         {Name: "name", Type: schema.STRING, Required: true, Unique: true},
+        {Name: "industry", Type: schema.STRING},
+        {Name: "employeeCount", Type: schema.INTEGER},
     },
 }
 ```
 
-After importing, you can add relationship definitions, cardinality, and GoDoc comments to complete your schema.
+**schema/relationships.go**
+```go
+package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+// WorksFor connects a Person to their employer.
+// Each person can work for one company; companies have many employees.
+var WorksFor = &schema.RelationshipType{
+    Label:       "WORKS_FOR",
+    Source:      "Person",
+    Target:      "Company",
+    Cardinality: schema.MANY_TO_ONE,
+    Properties: []schema.Property{
+        {Name: "since", Type: schema.DATE, Required: true},
+        {Name: "role", Type: schema.STRING},
+    },
+}
+
+// Knows represents a social connection between people.
+var Knows = &schema.RelationshipType{
+    Label:       "KNOWS",
+    Source:      "Person",
+    Target:      "Person",
+    Cardinality: schema.MANY_TO_MANY,
+    Properties: []schema.Property{
+        {Name: "since", Type: schema.DATE},
+        {Name: "strength", Type: schema.FLOAT},
+    },
+}
+```
+
+### 2. Validate Your Schema
+
+```bash
+wetwire-neo4j lint ./schema/
+```
+
+The linter enforces naming conventions (PascalCase labels, SCREAMING_SNAKE_CASE relationships), required fields, and valid references.
+
+### 3. Generate Queries with AI
+
+Ask your AI agent to read the schema and generate queries:
+
+> "Read schema/ and write a query to find people who work at tech companies"
+
+The agent generates correct Cypher because it knows your exact schema:
+
+```cypher
+MATCH (p:Person)-[w:WORKS_FOR]->(c:Company)
+WHERE c.industry = 'tech'
+RETURN p.name, c.name, w.role
+```
+
+### Why Go Schema Instead of JSON?
+
+| Aspect | JSON Schema | Go Schema |
+|--------|-------------|-----------|
+| Validation | Runtime only | Compile-time + lint |
+| Documentation | None | First-class GoDoc comments |
+| Structure | Deeply nested | Flat, scannable declarations |
+| Naming conventions | Honor system | Enforced by linter |
+| Cardinality | Usually missing | Explicit field |
+| Typos | Found at query time | Caught by compiler |
+
+The Go schema acts as a **contract** - if it passes `wetwire-neo4j lint`, the agent can trust every label, relationship type, and property name is exactly as defined. This produces more consistent and correct Cypher than having agents work from JSON or documentation.
 
 ## Commands
 
@@ -213,12 +223,28 @@ wetwire-neo4j-go/
 └── examples/           # Reference examples
 ```
 
+## Kiro CLI Integration
+
+wetwire-neo4j works with [Kiro CLI](https://kiro.dev) for AI-assisted schema design:
+
+```bash
+# Auto-configure and start Kiro design session
+wetwire-neo4j design --provider kiro "Create a social network schema"
+```
+
+The MCP server (`wetwire-neo4j mcp`) exposes three tools to Kiro:
+- `wetwire_init` - Initialize a new project
+- `wetwire_lint` - Validate schema definitions
+- `wetwire_build` - Generate Cypher and JSON configs
+
+See [docs/NEO4J-KIRO-CLI.md](docs/NEO4J-KIRO-CLI.md) for complete integration guide.
+
 ## Integration with wetwire-core-go
 
 wetwire-neo4j-go integrates with [wetwire-core-go](https://github.com/lex00/wetwire-core-go) for:
 
 - CLI infrastructure and command registration
-- MCP server integration for Claude Code
+- MCP server integration for Claude Code and Kiro CLI
 - Common lint rule framework
 
 ## References
