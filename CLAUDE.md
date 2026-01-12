@@ -1,83 +1,180 @@
-# wetwire-neo4j-go
+# Claude Code Guidelines for wetwire-neo4j-go
 
-Neo4j configuration synthesis for Go - type-safe declarations that compile to Cypher and JSON configurations.
+This document provides AI assistant guidelines for working with wetwire-neo4j-go.
 
-## Package structure
+## Overview
+
+wetwire-neo4j-go is a synthesis library for Neo4j that generates Cypher statements and JSON configurations from native Go definitions. It follows the wetwire pattern: declare infrastructure in native code, then synthesize deployment artifacts.
+
+## Package Structure
 
 ```
 wetwire-neo4j-go/
-├── cmd/wetwire-neo4j/       # CLI entry point
-├── pkg/neo4j/               # Public API
-│   └── schema/              # Schema definitions (NodeType, RelationshipType)
+├── cmd/neo4j/          # CLI entry point
 ├── internal/
-│   ├── discovery/           # AST-based resource discovery
-│   ├── serializer/          # Cypher and JSON serialization
-│   ├── linter/              # Neo4j-specific lint rules (WN4xxx)
-│   ├── importer/            # Import from existing Neo4j
-│   ├── algorithms/          # GDS algorithm configurations
-│   ├── pipelines/           # ML pipeline configurations
-│   └── graphrag/            # GraphRAG pipeline support
-├── docs/                    # Documentation
-└── examples/                # Usage examples
+│   ├── algorithms/     # GDS algorithm definitions
+│   ├── cli/            # CLI implementation
+│   ├── discovery/      # AST-based resource discovery
+│   ├── importer/       # Import from Neo4j/Cypher
+│   ├── kg/             # Knowledge graph pipelines
+│   ├── lint/           # Lint rules (WN4xxx)
+│   ├── pipelines/      # ML pipeline definitions
+│   ├── projections/    # Graph projection definitions
+│   ├── retrievers/     # GraphRAG retrievers
+│   ├── serializer/     # Cypher and JSON serializers
+│   └── validator/      # Neo4j instance validation
+├── pkg/neo4j/schema/   # Public schema types
+└── examples/           # Reference examples
 ```
 
-## Core components
+## Core Patterns
 
-### Schema definitions (`pkg/neo4j/schema`)
+### Schema Definitions
 
-Type-safe schema primitives:
-- `NodeType` - Node labels with properties, constraints, indexes
-- `RelationshipType` - Relationships with source/target, cardinality
-- `Property` - Property definitions with Neo4j types
-- `Validator` - Schema validation with naming conventions
+Node types and relationship types are defined as Go struct pointers:
 
-### Property types
+```go
+// Node type with label, properties, constraints, and indexes
+var Person = &schema.NodeType{
+    Label: "Person",
+    Properties: []schema.Property{
+        {Name: "id", Type: schema.TypeString, Required: true},
+        {Name: "name", Type: schema.TypeString, Required: true},
+    },
+    Constraints: []schema.Constraint{
+        {Type: schema.Unique, Properties: []string{"id"}},
+    },
+}
 
-| Type | Neo4j Type | Go Type |
-|------|-----------|---------|
-| STRING | String | string |
-| INTEGER | Integer | int64 |
-| FLOAT | Float | float64 |
-| BOOLEAN | Boolean | bool |
-| DATE | Date | time.Time |
-| DATETIME | DateTime | time.Time |
-| POINT | Point | Point |
-| LIST_STRING | List<String> | []string |
+// Relationship type with source/target labels
+var WorksFor = &schema.RelationshipType{
+    Label:  "WORKS_FOR",
+    Source: "Person",
+    Target: "Company",
+}
+```
 
-### Naming conventions
+### GDS Algorithms
 
-- Node labels: PascalCase (e.g., `Person`, `Company`)
-- Relationship types: SCREAMING_SNAKE_CASE (e.g., `WORKS_FOR`, `KNOWS`)
-- Property names: camelCase or snake_case
+Algorithms are defined with a `BaseAlgorithm` embedded struct:
+
+```go
+var Influence = &algorithms.PageRank{
+    BaseAlgorithm: algorithms.BaseAlgorithm{
+        GraphName: "social-network",
+        Mode:      algorithms.Stream,
+    },
+    DampingFactor: 0.85,
+    MaxIterations: 20,
+}
+```
+
+### Graph Projections
+
+Projections create in-memory graphs for GDS:
+
+```go
+var SocialGraph = &projections.NativeProjection{
+    Name: "social-network",
+    NodeProjections: []projections.NodeProjection{
+        {Label: "Person"},
+    },
+    RelationshipProjections: []projections.RelationshipProjection{
+        {Type: "KNOWS"},
+    },
+}
+```
+
+## Naming Conventions
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Node Labels | PascalCase | `Person`, `Company`, `MovieRating` |
+| Relationship Types | SCREAMING_SNAKE_CASE | `WORKS_FOR`, `HAS_ADDRESS` |
+| Property Names | camelCase or snake_case | `firstName`, `created_at` |
+| Variable Names | camelCase | `person`, `worksFor` |
+
+## Lint Rules (WN4xxx)
+
+| Range | Category |
+|-------|----------|
+| WN4001-WN4029 | GDS Algorithm Rules |
+| WN4030-WN4039 | ML Pipeline Rules |
+| WN4040-WN4049 | GraphRAG Rules |
+| WN4050-WN4059 | Schema Rules |
+| WN4060-WN4069 | Projection Rules |
+
+Key rules:
+- **WN4001**: dampingFactor must be in [0, 1)
+- **WN4002**: maxIterations must be positive
+- **WN4006**: embeddingDimension should be power of 2
+- **WN4052**: node labels should be PascalCase
+- **WN4053**: relationship types should be SCREAMING_SNAKE_CASE
+
+## CLI Commands
+
+```bash
+wetwire-neo4j build ./schemas/     # Generate Cypher/JSON
+wetwire-neo4j lint ./schemas/      # Check for issues
+wetwire-neo4j list ./schemas/      # List discovered resources
+wetwire-neo4j validate --uri ...   # Validate against Neo4j
+wetwire-neo4j import --file ...    # Import existing schemas
+```
+
+## Property Types
+
+| Constant | Neo4j Type | Go Type |
+|----------|------------|---------|
+| `TypeString` | String | string |
+| `TypeInteger` | Integer | int64 |
+| `TypeFloat` | Float | float64 |
+| `TypeBoolean` | Boolean | bool |
+| `TypeDate` | Date | time.Time |
+| `TypeDateTime` | DateTime | time.Time |
+| `TypePoint` | Point | Point |
+| `TypeListString` | List<String> | []string |
+
+## Common Tasks
+
+### Adding a New Algorithm
+
+1. Check existing algorithms in `internal/algorithms/`
+2. Create a new struct embedding `BaseAlgorithm`
+3. Add serialization in `internal/serializer/algorithm.go`
+4. Add lint rules in `internal/lint/lint.go`
+5. Add tests and examples
+
+### Adding a New Lint Rule
+
+1. Add rule constant in `internal/lint/lint.go`
+2. Implement rule logic in appropriate Lint* method
+3. Add test cases
+4. Document in `docs/LINT_RULES.md`
+
+## Gotchas
+
+1. **Algorithm Mode**: Always set `Mode` in `BaseAlgorithm` - defaults to empty which is invalid
+2. **Graph Name**: Algorithms reference a graph by name - ensure a projection with that name exists
+3. **Property Types**: Use `schema.Type*` constants, not strings
+4. **Constraint Names**: Neo4j requires unique constraint names across the database
+
+## Building and Testing
+
+```bash
+go test ./...           # Run all tests
+go test ./... -v        # Verbose output
+golangci-lint run ./... # Run linter
+go build ./...          # Build all packages
+```
 
 ## Dependencies
 
 - `github.com/lex00/wetwire-core-go` - Core infrastructure (MCP server, CLI utilities)
-
-## Building and testing
-
-```bash
-# Run tests
-go test ./...
-
-# Run with verbose output
-go test ./... -v
-
-# Check code
-go vet ./...
-go fmt ./...
-```
-
-## Lint rules (planned)
-
-Neo4j lint rules use prefix WN4:
-- WN4001-WN4008: GDS algorithm rules
-- WN4030-WN4035: ML pipeline rules
-- WN4040-WN4047: GraphRAG rules
-- WN4050-WN4056: Schema rules
+- `github.com/neo4j/neo4j-go-driver/v5` - Neo4j driver for validation/import
 
 ## References
 
 - [Neo4j GDS Documentation](https://neo4j.com/docs/graph-data-science/current/)
 - [neo4j-graphrag-python](https://github.com/neo4j/neo4j-graphrag-python)
+- [wetwire-core-go](https://github.com/lex00/wetwire-core-go)
 - [ROADMAP](https://github.com/lex00/wetwire-neo4j-go/issues/18)
