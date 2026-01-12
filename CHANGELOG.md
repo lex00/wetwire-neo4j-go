@@ -79,6 +79,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for embedder configuration and few-shot examples
   - Full test coverage (20 test functions)
 
+- GraphRAG knowledge graph construction pipelines in `internal/kg`
+  - `SimpleKGPipeline` for standard entity and relationship extraction
+  - `CustomKGPipeline` for custom extraction with user-defined prompts
+  - Entity types with properties and descriptions
+  - Relationship types with source/target constraints
+  - Text splitters: FixedSizeSplitter, LangChainSplitter
+  - Entity resolvers: ExactMatch, FuzzyMatch, SemanticMatch
+  - `KGSerializer` for JSON configuration export
+  - Schema generation for LLM extraction prompts
+  - Full test coverage (22 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
