@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Validator` for schema validation with PascalCase/SCREAMING_SNAKE_CASE enforcement
   - Full test coverage for types and validation
 
+- Discovery system in `internal/discovery`
+  - `Scanner` for AST-based resource discovery in Go source files
+  - Detects NodeType, RelationshipType, Algorithm, Pipeline, and Retriever definitions
+  - Supports struct types with embedded resource types and variable declarations
+  - `DependencyGraph` with topological sort for dependency ordering
+  - Cycle detection for circular dependencies
+  - Skips test files and vendor directories
+  - Full test coverage (20+ test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
