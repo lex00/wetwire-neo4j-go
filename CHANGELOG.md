@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Expanded validator test coverage in `internal/validator`
+  - 27 test functions covering helper functions and structures
+  - Tests for FormatResults, HasErrors, FilterInvalid, existsMsg
+  - Tests for Config, ValidationResult, GDSInfo, DatabaseInfo structures
+  - MockValidator tests for labelExists, relationshipTypeExists
+  - Full coverage of testable code (Neo4j connection-dependent code requires integration tests)
+
 - CLI command tests in `cmd/neo4j`
   - Tests for list, validate, import, graph, version commands
   - Tests for command flags and execution
