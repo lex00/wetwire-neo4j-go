@@ -120,6 +120,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `wetwire-neo4j list` - List discovered definitions
   - `wetwire-neo4j version` - Show version information
 
+- External validation in `internal/validator`
+  - `Validator` for validating configurations against live Neo4j instance
+  - Schema validation (node labels, relationship types, constraints, indexes)
+  - GDS algorithm validation (algorithm existence, graph catalog checks)
+  - Graph projection validation (node labels, relationship types)
+  - Database and GDS version detection
+  - Full test coverage (14 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
