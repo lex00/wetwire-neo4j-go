@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/lex00/wetwire-core-go v1.4.0
+	github.com/neo4j/neo4j-go-driver/v5 v5.28.4
 	github.com/spf13/cobra v1.10.2
 )
 
