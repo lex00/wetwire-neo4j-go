@@ -22,6 +22,7 @@ func newDesignCmd() *cobra.Command {
 	var outputDir string
 	var maxLintCycles int
 	var stream bool
+	var mcpServer bool
 
 	cmd := &cobra.Command{
 		Use:   "design [prompt]",
@@ -38,8 +39,18 @@ Example:
     wetwire-neo4j design "Create a social network schema with Person nodes and KNOWS relationships"
     wetwire-neo4j design "Set up PageRank on my user graph"
     wetwire-neo4j design "Create a document store with vector embeddings for RAG"`,
-		Args: cobra.MinimumNArgs(1),
+		Args: cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// MCP server mode - run as stdio MCP server
+			if mcpServer {
+				return runMCPServer()
+			}
+
+			// Interactive mode requires a prompt
+			if len(args) == 0 {
+				return fmt.Errorf("prompt is required (or use --mcp-server)")
+			}
+
 			prompt := strings.Join(args, " ")
 			return runDesign(prompt, outputDir, maxLintCycles, stream)
 		},
@@ -48,6 +59,8 @@ Example:
 	cmd.Flags().StringVarP(&outputDir, "output", "o", ".", "Output directory for generated files")
 	cmd.Flags().IntVarP(&maxLintCycles, "max-lint-cycles", "l", 3, "Maximum lint/fix cycles")
 	cmd.Flags().BoolVarP(&stream, "stream", "s", true, "Stream AI responses")
+	cmd.Flags().BoolVar(&mcpServer, "mcp-server", false, "Run as MCP server on stdio")
+	_ = cmd.Flags().MarkHidden("mcp-server")
 
 	return cmd
 }
