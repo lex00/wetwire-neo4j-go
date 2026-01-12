@@ -7,6 +7,7 @@
 //	wetwire-neo4j list         - List discovered definitions
 //	wetwire-neo4j validate     - Validate against live Neo4j instance
 //	wetwire-neo4j import       - Import schemas from Neo4j or Cypher files
+//	wetwire-neo4j graph        - Visualize resource dependencies
 //	wetwire-neo4j version      - Show version information
 package main
 
@@ -48,6 +49,7 @@ func run() error {
 	rootCmd.AddCommand(newListCommand())
 	rootCmd.AddCommand(newValidateCommand())
 	rootCmd.AddCommand(newImportCommand())
+	rootCmd.AddCommand(newGraphCommand())
 	rootCmd.AddCommand(newVersionCommand())
 
 	return rootCmd.Execute()
@@ -162,6 +164,34 @@ The generated Go code uses wetwire-neo4j-go schema types.`,
 	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
 	cmd.Flags().StringVar(&packageName, "package", "schema", "Go package name for generated code")
 	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file path (default: stdout)")
+
+	return cmd
+}
+
+func newGraphCommand() *cobra.Command {
+	var path string
+	var format string
+
+	cmd := &cobra.Command{
+		Use:   "graph",
+		Short: "Visualize resource dependencies",
+		Long: `Graph generates a dependency graph visualization of discovered resources.
+
+Supported formats:
+- dot: Graphviz DOT format (default)
+- mermaid: Mermaid diagram format
+
+The graph shows:
+- Resources as nodes, colored by kind
+- Dependencies as directed edges`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			graph := cli.NewGraphCLI()
+			return graph.Generate(path, format, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().StringVarP(&path, "path", "p", ".", "Path to source definitions")
+	cmd.Flags().StringVarP(&format, "format", "f", "dot", "Output format (dot, mermaid)")
 
 	return cmd
 }
