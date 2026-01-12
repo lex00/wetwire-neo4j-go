@@ -36,6 +36,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `NodeTypeToMap` and `RelationshipTypeToMap` for flexible serialization
   - Full test coverage (26 test functions)
 
+- GDS algorithm configurations in `internal/algorithms`
+  - Centrality algorithms: PageRank, ArticleRank, Betweenness, Degree, Closeness
+  - Community detection: Louvain, Leiden, LabelPropagation, WCC, TriangleCount, KCore
+  - Similarity algorithms: NodeSimilarity, KNN
+  - Embeddings: FastRP, Node2Vec, GraphSAGE, HashGNN
+  - Path finding: Dijkstra, AStar, BFS, DFS
+  - `AlgorithmSerializer` for Cypher CALL statements and JSON output
+  - Support for stream, stats, mutate, and write execution modes
+  - Full test coverage (30+ test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
