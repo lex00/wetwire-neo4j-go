@@ -4,66 +4,173 @@ Neo4j configuration synthesis for Go - type-safe declarations that compile to Cy
 
 ## Overview
 
-wetwire-neo4j is a **synthesis library** for Neo4j beyond Cypher queries. It targets:
+wetwire-neo4j-go is a **synthesis library** for Neo4j that goes beyond Cypher queries. Define your Neo4j configurations in native Go and compile them to Cypher statements and JSON configurations.
 
-1. **GDS Algorithm Configurations** - PageRank, Louvain, FastRP with typed parameters
-2. **ML Pipelines** - Node classification, link prediction, node regression
-3. **GraphRAG Pipelines** - Retrievers, knowledge graph construction, entity resolution
-4. **Schema Definitions** - Node types, relationships, constraints, taxonomy structures
+**Supported configurations:**
+
+- **Schema Definitions** - Node types, relationships, constraints, indexes
+- **GDS Algorithms** - PageRank, Louvain, FastRP, Node2Vec, KNN, Dijkstra, and more
+- **ML Pipelines** - Node classification, link prediction, node regression
+- **GraphRAG** - Retrievers, knowledge graph construction, entity resolution
+- **Graph Projections** - Native and Cypher projections for GDS
 
 ```
-Go Structs → wetwire-neo4j build → Cypher + JSON → Neo4j GDS/GraphRAG APIs
+Go Structs → wetwire-neo4j build → Cypher + JSON → Neo4j / GDS / GraphRAG APIs
 ```
 
 ## Installation
 
 ```bash
-go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
+go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
 ```
 
-## Quick Example
+## Quick Start
+
+### 1. Define Schema
 
 ```go
-package main
+package schema
 
-import (
-    "github.com/lex00/wetwire-neo4j-go/pkg/neo4j"
-)
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 
-// Schema definition
-type Person struct {
-    neo4j.NodeType
-    Label string `neo4j:"Person"`
+// Person node type with constraints
+var Person = &schema.NodeType{
+    Label: "Person",
+    Properties: []schema.Property{
+        {Name: "id", Type: schema.TypeString, Required: true},
+        {Name: "name", Type: schema.TypeString, Required: true},
+        {Name: "email", Type: schema.TypeString},
+    },
+    Constraints: []schema.Constraint{
+        {Type: schema.Unique, Properties: []string{"id"}},
+    },
+    Indexes: []schema.Index{
+        {Type: schema.RangeIndex, Properties: []string{"name"}},
+    },
 }
 
-func (p Person) Properties() []neo4j.Property {
-    return []neo4j.Property{
-        {Name: "id", Type: neo4j.String, Required: true, Unique: true},
-        {Name: "name", Type: neo4j.String, Required: true},
-        {Name: "email", Type: neo4j.String, Unique: true},
-    }
+// WORKS_FOR relationship
+var WorksFor = &schema.RelationshipType{
+    Label:  "WORKS_FOR",
+    Source: "Person",
+    Target: "Company",
+    Properties: []schema.Property{
+        {Name: "since", Type: schema.TypeDate},
+    },
+}
+```
+
+### 2. Define Algorithms
+
+```go
+package algorithms
+
+import "github.com/lex00/wetwire-neo4j-go/internal/algorithms"
+
+// PageRank configuration
+var InfluenceScore = &algorithms.PageRank{
+    BaseAlgorithm: algorithms.BaseAlgorithm{
+        GraphName: "social-network",
+        Mode:      algorithms.Stream,
+    },
+    DampingFactor: 0.85,
+    MaxIterations: 20,
 }
 
-// Algorithm configuration
-type InfluenceScore struct {
-    neo4j.PageRank
-    DampingFactor float64 `neo4j:"dampingFactor" default:"0.85"`
-    MaxIterations int     `neo4j:"maxIterations" default:"50"`
-    Tolerance     float64 `neo4j:"tolerance" default:"1e-7"`
+// Community detection with Louvain
+var Communities = &algorithms.Louvain{
+    BaseAlgorithm: algorithms.BaseAlgorithm{
+        GraphName: "social-network",
+        Mode:      algorithms.Mutate,
+    },
+    MutateProperty: "communityId",
 }
+```
+
+### 3. Build and Validate
+
+```bash
+# Generate Cypher
+neo4j build ./schema/
+
+# Lint configurations
+neo4j lint ./schema/
+
+# Validate against live Neo4j
+neo4j validate --uri bolt://localhost:7687
 ```
 
 ## Commands
 
-```bash
-wetwire-neo4j build ./schemas/    # Generate Cypher constraints + JSON configs
-wetwire-neo4j lint ./schemas/     # Validate schemas, algorithms, pipelines
-wetwire-neo4j list                # List all definitions
-wetwire-neo4j validate            # Check against live Neo4j instance
-wetwire-neo4j import              # Import existing constraints from Neo4j
-wetwire-neo4j graph               # Visualize schema as Mermaid/DOT
+| Command | Description |
+|---------|-------------|
+| `build` | Generate Cypher statements and JSON configurations |
+| `lint` | Validate against wetwire lint rules (WN4xxx) |
+| `list` | List all discovered definitions |
+| `validate` | Check against a live Neo4j instance |
+| `import` | Import existing Neo4j constraints and indexes |
+
+See [docs/CLI.md](docs/CLI.md) for detailed command reference.
+
+## Lint Rules
+
+wetwire-neo4j-go includes lint rules to catch common configuration issues:
+
+| Rule | Description |
+|------|-------------|
+| WN4001 | Damping factor must be in [0, 1) |
+| WN4002 | Max iterations must be positive |
+| WN4006 | Embedding dimension should be power of 2 |
+| WN4052 | Node labels should use PascalCase |
+| WN4053 | Relationship types should use SCREAMING_SNAKE_CASE |
+
+See [docs/LINT_RULES.md](docs/LINT_RULES.md) for complete rule documentation.
+
+## Examples
+
+The `examples/` directory contains comprehensive examples:
+
+- **Schema definitions** - Node types, relationship types with constraints
+- **GDS algorithms** - PageRank, Louvain, FastRP, Node2Vec, KNN, Dijkstra
+- **ML pipelines** - Node classification, link prediction, regression
+- **GraphRAG retrievers** - Vector, Hybrid, Text2Cypher, external integrations
+- **KG pipelines** - Entity extraction, knowledge graph construction
+
+## Architecture
+
+```
+wetwire-neo4j-go/
+├── cmd/neo4j/          # CLI entry point
+├── internal/
+│   ├── algorithms/     # GDS algorithm definitions
+│   ├── cli/            # CLI implementation (build, lint, list)
+│   ├── discovery/      # AST-based resource discovery
+│   ├── importer/       # Import from Neo4j/Cypher files
+│   ├── kg/             # Knowledge graph pipeline definitions
+│   ├── lint/           # Lint rules (WN4xxx)
+│   ├── pipelines/      # ML pipeline definitions
+│   ├── projections/    # Graph projection definitions
+│   ├── retrievers/     # GraphRAG retriever definitions
+│   ├── serializer/     # Cypher and JSON serializers
+│   └── validator/      # Neo4j instance validation
+├── pkg/neo4j/schema/   # Public schema types
+└── examples/           # Reference examples
 ```
 
-## Status
+## Integration with wetwire-core-go
 
-Under development - see [ROADMAP](https://github.com/lex00/wetwire-neo4j-go/issues/18)
+wetwire-neo4j-go integrates with [wetwire-core-go](https://github.com/lex00/wetwire-core-go) for:
+
+- CLI infrastructure and command registration
+- MCP server integration for Claude Code
+- Common lint rule framework
+
+## References
+
+- [Neo4j GDS Documentation](https://neo4j.com/docs/graph-data-science/current/)
+- [neo4j-graphrag-python](https://github.com/neo4j/neo4j-graphrag-python) - Reference implementation
+- [wetwire-core-go](https://github.com/lex00/wetwire-core-go) - Core infrastructure
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
