@@ -68,6 +68,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graph management utilities: DropGraph, GraphExists, ListGraphs
   - Full test coverage (19 test functions)
 
+- GraphRAG retriever configurations in `internal/retrievers`
+  - `VectorRetriever` for similarity search using vector indexes
+  - `VectorCypherRetriever` for vector search with custom graph traversal
+  - `HybridRetriever` combining vector and fulltext search
+  - `HybridCypherRetriever` for hybrid search with custom traversal
+  - `Text2CypherRetriever` for LLM-generated Cypher queries
+  - External integrations: Weaviate, Pinecone, Qdrant
+  - `RetrieverSerializer` for JSON configuration export
+  - Support for embedder configuration and few-shot examples
+  - Full test coverage (20 test functions)
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
