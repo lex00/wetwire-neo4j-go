@@ -118,6 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `wetwire-neo4j build` - Build Cypher/JSON from definitions
   - `wetwire-neo4j lint` - Lint definitions for issues
   - `wetwire-neo4j list` - List discovered definitions
+  - `wetwire-neo4j validate` - Validate against live Neo4j instance
+  - `wetwire-neo4j import` - Import schemas from Cypher files or Neo4j
   - `wetwire-neo4j version` - Show version information
 
 - External validation in `internal/validator`
@@ -127,6 +129,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graph projection validation (node labels, relationship types)
   - Database and GDS version detection
   - Full test coverage (14 test functions)
+
+- Schema importer in `internal/importer`
+  - `CypherImporter` for parsing Cypher constraint/index statements
+  - `Neo4jImporter` for importing from live Neo4j databases
+  - `Generator` for generating Go code from imported schemas
+  - Supports UNIQUE, NODE_KEY, EXISTS constraints
+  - Supports RANGE, FULLTEXT, TEXT, VECTOR indexes
+  - Full test coverage (8 test functions)
+
+- Reference examples in `examples/`
+  - Schema definitions (Person, Company, WORKS_FOR, KNOWS)
+  - GDS algorithms (PageRank, Louvain, FastRP, Node2Vec, KNN, Dijkstra)
+  - ML pipelines (NodeClassification, LinkPrediction, NodeRegression)
+  - GraphRAG retrievers (Vector, VectorCypher, Hybrid, Text2Cypher)
+  - KG pipelines (SimpleKG, CustomKG)
+  - Graph projections (Native, Cypher)
+  - Integration tests validating all examples
+
+- Documentation
+  - `docs/CLI.md` - CLI command reference
+  - `docs/LINT_RULES.md` - WN4xxx lint rule documentation
+  - Updated `README.md` with architecture and quick start
 
 ## [0.1.0] - 2026-01-11
 
