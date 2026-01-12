@@ -2,6 +2,7 @@
 //
 // This package implements WN4xxx lint rules for:
 // - GDS algorithm configurations (WN4001-WN4008)
+// - Style enforcement (WN4010-WN4013)
 // - ML pipeline configurations (WN4030-WN4035)
 // - GraphRAG configurations (WN4040-WN4047)
 // - Schema definitions (WN4050-WN4056)
@@ -52,17 +53,33 @@ type LintResult struct {
 
 // Linter validates Neo4j GDS configurations.
 type Linter struct {
-	pascalCaseRegex   *regexp.Regexp
-	screamingRegex    *regexp.Regexp
+	pascalCaseRegex       *regexp.Regexp
+	screamingRegex        *regexp.Regexp
+	maxInlineProperties   int
+	maxNestingDepth       int
 }
 
-// NewLinter creates a new linter.
+// NewLinter creates a new linter with default settings.
 func NewLinter() *Linter {
 	return &Linter{
 		// PascalCase: starts with uppercase, followed by letters/digits, must have at least one lowercase
-		pascalCaseRegex: regexp.MustCompile(`^[A-Z][a-zA-Z0-9]*[a-z][a-zA-Z0-9]*$|^[A-Z][a-z][a-zA-Z0-9]*$`),
-		screamingRegex:  regexp.MustCompile(`^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$`),
+		pascalCaseRegex:     regexp.MustCompile(`^[A-Z][a-zA-Z0-9]*[a-z][a-zA-Z0-9]*$|^[A-Z][a-z][a-zA-Z0-9]*$`),
+		screamingRegex:      regexp.MustCompile(`^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$`),
+		maxInlineProperties: 5,  // WN4011: warn if more than 5 inline properties
+		maxNestingDepth:     3,  // WN4012: max nesting depth for schema definitions
 	}
+}
+
+// WithMaxInlineProperties sets the threshold for WN4011 inline property warnings.
+func (l *Linter) WithMaxInlineProperties(max int) *Linter {
+	l.maxInlineProperties = max
+	return l
+}
+
+// WithMaxNestingDepth sets the threshold for WN4012 nesting depth warnings.
+func (l *Linter) WithMaxNestingDepth(max int) *Linter {
+	l.maxNestingDepth = max
+	return l
 }
 
 // LintAlgorithm validates a GDS algorithm configuration.
@@ -302,10 +319,44 @@ func (l *Linter) LintKGPipeline(pipeline kg.KGPipeline) []LintResult {
 
 // LintNodeType validates a node type definition.
 func (l *Linter) LintNodeType(node *schema.NodeType) []LintResult {
+	return l.lintNodeTypeWithDepth(node, 0)
+}
+
+func (l *Linter) lintNodeTypeWithDepth(node *schema.NodeType, depth int) []LintResult {
 	var results []LintResult
 
+	// WN4010: Use typed NodeType, not raw structs (empty Label indicates raw struct)
+	if node.Label == "" {
+		results = append(results, LintResult{
+			Rule:     "WN4010",
+			Severity: Error,
+			Message:  "NodeType must have a Label; use typed constructor instead of raw struct",
+			Location: "NodeType.Label",
+		})
+	}
+
+	// WN4011: Extract inline Property definitions to named vars
+	if len(node.Properties) > l.maxInlineProperties {
+		results = append(results, LintResult{
+			Rule:     "WN4011",
+			Severity: Warning,
+			Message:  fmt.Sprintf("NodeType '%s' has %d inline properties; consider extracting to named variables for readability (max %d)", node.Label, len(node.Properties), l.maxInlineProperties),
+			Location: fmt.Sprintf("NodeType(%s).Properties", node.Label),
+		})
+	}
+
+	// WN4012: Prevent deeply nested schema definitions
+	if depth > l.maxNestingDepth {
+		results = append(results, LintResult{
+			Rule:     "WN4012",
+			Severity: Warning,
+			Message:  fmt.Sprintf("NodeType '%s' nested at depth %d exceeds max depth %d", node.Label, depth, l.maxNestingDepth),
+			Location: fmt.Sprintf("NodeType(%s)", node.Label),
+		})
+	}
+
 	// WN4052: Node labels should be PascalCase
-	if !l.pascalCaseRegex.MatchString(node.Label) {
+	if node.Label != "" && !l.pascalCaseRegex.MatchString(node.Label) {
 		results = append(results, LintResult{
 			Rule:     "WN4052",
 			Severity: Warning,
@@ -319,10 +370,62 @@ func (l *Linter) LintNodeType(node *schema.NodeType) []LintResult {
 
 // LintRelationshipType validates a relationship type definition.
 func (l *Linter) LintRelationshipType(rel *schema.RelationshipType) []LintResult {
+	return l.lintRelationshipTypeWithDepth(rel, 0)
+}
+
+func (l *Linter) lintRelationshipTypeWithDepth(rel *schema.RelationshipType, depth int) []LintResult {
 	var results []LintResult
 
+	// WN4010: Use typed RelationshipType, not raw structs (empty Label indicates raw struct)
+	if rel.Label == "" {
+		results = append(results, LintResult{
+			Rule:     "WN4010",
+			Severity: Error,
+			Message:  "RelationshipType must have a Label; use typed constructor instead of raw struct",
+			Location: "RelationshipType.Label",
+		})
+	}
+
+	// WN4011: Extract inline Property definitions to named vars
+	if len(rel.Properties) > l.maxInlineProperties {
+		results = append(results, LintResult{
+			Rule:     "WN4011",
+			Severity: Warning,
+			Message:  fmt.Sprintf("RelationshipType '%s' has %d inline properties; consider extracting to named variables for readability (max %d)", rel.Label, len(rel.Properties), l.maxInlineProperties),
+			Location: fmt.Sprintf("RelationshipType(%s).Properties", rel.Label),
+		})
+	}
+
+	// WN4012: Prevent deeply nested schema definitions
+	if depth > l.maxNestingDepth {
+		results = append(results, LintResult{
+			Rule:     "WN4012",
+			Severity: Warning,
+			Message:  fmt.Sprintf("RelationshipType '%s' nested at depth %d exceeds max depth %d", rel.Label, depth, l.maxNestingDepth),
+			Location: fmt.Sprintf("RelationshipType(%s)", rel.Label),
+		})
+	}
+
+	// WN4013: Use direct references for relationship Source/Target
+	if rel.Source == "" {
+		results = append(results, LintResult{
+			Rule:     "WN4013",
+			Severity: Error,
+			Message:  fmt.Sprintf("RelationshipType '%s' must have a Source node type reference", rel.Label),
+			Location: fmt.Sprintf("RelationshipType(%s).Source", rel.Label),
+		})
+	}
+	if rel.Target == "" {
+		results = append(results, LintResult{
+			Rule:     "WN4013",
+			Severity: Error,
+			Message:  fmt.Sprintf("RelationshipType '%s' must have a Target node type reference", rel.Label),
+			Location: fmt.Sprintf("RelationshipType(%s).Target", rel.Label),
+		})
+	}
+
 	// WN4053: Relationship types should be SCREAMING_SNAKE_CASE
-	if !l.screamingRegex.MatchString(rel.Label) {
+	if rel.Label != "" && !l.screamingRegex.MatchString(rel.Label) {
 		results = append(results, LintResult{
 			Rule:     "WN4053",
 			Severity: Warning,
