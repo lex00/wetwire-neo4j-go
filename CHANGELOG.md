@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP server integration in `cmd/neo4j`
+  - Uses wetwire-core-go mcp package for protocol handling
+  - `wetwire-neo4j design --mcp-server` starts MCP server on stdio
+  - Implements standard wetwire tools: init, build, lint, validate, list, graph
+  - JSON schema definitions for all tool inputs
+  - Enables Claude Code integration via MCP protocol
+
 - Expanded validator test coverage in `internal/validator`
   - 27 test functions covering helper functions and structures
   - Tests for FormatResults, HasErrors, FilterInvalid, existsMsg
