@@ -9,6 +9,8 @@
 //	wetwire-neo4j validate     - Validate against live Neo4j instance
 //	wetwire-neo4j import       - Import schemas from Neo4j or Cypher files
 //	wetwire-neo4j graph        - Visualize resource dependencies
+//	wetwire-neo4j design       - AI-assisted schema and algorithm design
+//	wetwire-neo4j test         - Run persona-based testing
 //	wetwire-neo4j version      - Show version information
 package main
 
@@ -53,6 +55,8 @@ func run() error {
 	rootCmd.AddCommand(newValidateCommand())
 	rootCmd.AddCommand(newImportCommand())
 	rootCmd.AddCommand(newGraphCommand())
+	rootCmd.AddCommand(newDesignCmd())
+	rootCmd.AddCommand(newTestCmd())
 	rootCmd.AddCommand(newVersionCommand())
 
 	return rootCmd.Execute()
