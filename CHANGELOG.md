@@ -105,6 +105,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - HasErrors, FilterBySeverity, FormatResults utilities
   - Full test coverage (15 test functions)
 
+- CLI implementation in `internal/cli`
+  - `Builder` implementing wetwire-core-go cmd.Builder interface
+  - `Linter` implementing wetwire-core-go cmd.Linter interface
+  - `Lister` for discovering and listing Neo4j definitions
+  - Support for Cypher and JSON output formats
+  - Table and JSON listing formats
+  - Dependency graph visualization
+  - Full test coverage (27 test functions)
+
+- CLI entry point in `cmd/neo4j/main.go`
+  - `wetwire-neo4j build` - Build Cypher/JSON from definitions
+  - `wetwire-neo4j lint` - Lint definitions for issues
+  - `wetwire-neo4j list` - List discovered definitions
+  - `wetwire-neo4j version` - Show version information
+
 ## [0.1.0] - 2026-01-11
 
 ### Added
