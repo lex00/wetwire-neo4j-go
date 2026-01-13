@@ -5,13 +5,8 @@ import (
 	"github.com/lex00/wetwire-core-go/agent/agents"
 )
 
-// Neo4jDomain returns the Neo4j domain configuration for the runner agent.
-// This configures the agent to generate Neo4j GDS schemas and algorithms.
-func Neo4jDomain() agents.DomainConfig {
-	return agents.DomainConfig{
-		Name:       "neo4j",
-		CLICommand: "wetwire-neo4j",
-		SystemPrompt: `You are a graph database code generator using the wetwire-neo4j framework.
+// neo4jBasePrompt contains the base system prompt for the Neo4j agent.
+const neo4jBasePrompt = `You are a graph database code generator using the wetwire-neo4j framework.
 Your job is to generate Go code that defines Neo4j schemas, GDS algorithms, and GraphRAG configurations.
 
 The user will describe what graph database schema or analysis they need. You will:
@@ -82,7 +77,27 @@ Available tools:
 - run_build: Build the Cypher queries
 - ask_developer: Ask the developer a clarifying question
 
-Always run_lint after writing files, and fix any issues before running build.`,
+Always run_lint after writing files, and fix any issues before running build.`
+
+// Neo4jDomain returns the Neo4j domain configuration for the runner agent.
+// This configures the agent to generate Neo4j GDS schemas and algorithms.
+func Neo4jDomain() agents.DomainConfig {
+	return Neo4jDomainWithContext("")
+}
+
+// Neo4jDomainWithContext returns the Neo4j domain configuration with optional schema context.
+// If schemaContext is non-empty, it is prepended to the system prompt to inform the agent
+// about existing schema definitions in the project.
+func Neo4jDomainWithContext(schemaContext string) agents.DomainConfig {
+	prompt := neo4jBasePrompt
+	if schemaContext != "" {
+		prompt = schemaContext + "\n\n" + neo4jBasePrompt
+	}
+
+	return agents.DomainConfig{
+		Name:         "neo4j",
+		CLICommand:   "wetwire-neo4j",
+		SystemPrompt: prompt,
 		OutputFormat: "Neo4j Cypher queries",
 	}
 }
