@@ -92,11 +92,16 @@ func (g *Generator) Generate(result *ImportResult) (string, error) {
 	sb.WriteString("\t\"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema\"\n")
 	sb.WriteString(")\n\n")
 
+	// Collect variable names for the Schema
+	var nodeVarNames []string
+	var relVarNames []string
+
 	// Generate node types
 	for _, node := range result.NodeTypes {
 		code := g.generateNodeType(node)
 		sb.WriteString(code)
 		sb.WriteString("\n")
+		nodeVarNames = append(nodeVarNames, toCamelCase(node.Label))
 	}
 
 	// Generate relationship types
@@ -104,9 +109,50 @@ func (g *Generator) Generate(result *ImportResult) (string, error) {
 		code := g.generateRelationshipType(rel)
 		sb.WriteString(code)
 		sb.WriteString("\n")
+		relVarNames = append(relVarNames, toCamelCase(rel.Type))
 	}
 
+	// Generate Schema wrapper
+	sb.WriteString(g.generateSchema(nodeVarNames, relVarNames))
+
 	return sb.String(), nil
+}
+
+func (g *Generator) generateSchema(nodeVarNames, relVarNames []string) string {
+	var sb strings.Builder
+
+	sb.WriteString("// Schema wraps all node and relationship types with agent context.\n")
+	sb.WriteString("// Edit AgentContext to provide instructions for AI agents.\n")
+	sb.WriteString("var Schema = &schema.Schema{\n")
+	sb.WriteString(fmt.Sprintf("\tName: %q,\n", g.PackageName))
+
+	// Nodes
+	if len(nodeVarNames) > 0 {
+		sb.WriteString("\tNodes: []*schema.NodeType{\n")
+		for _, name := range nodeVarNames {
+			sb.WriteString(fmt.Sprintf("\t\t%s,\n", name))
+		}
+		sb.WriteString("\t},\n")
+	}
+
+	// Relationships
+	if len(relVarNames) > 0 {
+		sb.WriteString("\tRelationships: []*schema.RelationshipType{\n")
+		for _, name := range relVarNames {
+			sb.WriteString(fmt.Sprintf("\t\t%s,\n", name))
+		}
+		sb.WriteString("\t},\n")
+	}
+
+	// AgentContext placeholder
+	sb.WriteString("\t// TODO: Add agent context to guide AI query generation\n")
+	sb.WriteString("\t// AgentContext: `\n")
+	sb.WriteString("\t//     Multi-tenant database - always filter by tenantId.\n")
+	sb.WriteString("\t//     Ignore nodes prefixed with _ (internal).\n")
+	sb.WriteString("\t// `,\n")
+	sb.WriteString("}\n")
+
+	return sb.String()
 }
 
 func (g *Generator) generateNodeType(node NodeTypeDefinition) string {
