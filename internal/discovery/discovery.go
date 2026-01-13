@@ -237,8 +237,9 @@ func (s *Scanner) ScanDir(dir string) ([]DiscoveredResource, error) {
 
 		// Skip directories
 		if info.IsDir() {
-			// Skip hidden directories and vendor
-			if strings.HasPrefix(info.Name(), ".") || info.Name() == "vendor" {
+			// Skip hidden directories and vendor (but not "." or "..")
+			name := info.Name()
+			if (strings.HasPrefix(name, ".") && name != "." && name != "..") || name == "vendor" {
 				return filepath.SkipDir
 			}
 			return nil

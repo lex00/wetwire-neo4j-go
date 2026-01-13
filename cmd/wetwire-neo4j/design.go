@@ -100,6 +100,9 @@ func discoverSchemaContext(dir string) string {
 		fmt.Fprintf(os.Stderr, "Warning: could not scan for existing schema: %v\n", err)
 		return ""
 	}
+	if len(resources) > 0 {
+		fmt.Fprintf(os.Stderr, "Discovered %d existing resources in %s\n", len(resources), dir)
+	}
 	return discovery.FormatSchemaContext(resources)
 }
 
