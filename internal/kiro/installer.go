@@ -11,15 +11,26 @@ import (
 
 // kiroAgentJSON matches the kiro CLI's expected agent config format.
 type kiroAgentJSON struct {
-	Schema     string                `json:"$schema,omitempty"`
-	Name       string                `json:"name"`
-	Prompt     string                `json:"prompt"`
-	MCPServers map[string]mcpServer  `json:"mcpServers,omitempty"`
+	Schema       string               `json:"$schema,omitempty"`
+	Name         string               `json:"name"`
+	Prompt       string               `json:"prompt"`
+	MCPServers   map[string]mcpServer `json:"mcpServers,omitempty"`
+	AllowedTools []string             `json:"allowedTools,omitempty"`
 }
 
 type mcpServer struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
+}
+
+// Available MCP tools - must match what's registered in mcp.go
+var mcpTools = []string{
+	"wetwire_init",
+	"wetwire_build",
+	"wetwire_lint",
+	"wetwire_validate",
+	"wetwire_list",
+	"wetwire_graph",
 }
 
 // EnsureInstalled installs the Kiro agent configuration if not already present.
@@ -57,6 +68,7 @@ func InstallConfig(config corekiro.Config) error {
 				Args:    config.MCPArgs,
 			},
 		},
+		AllowedTools: mcpTools,
 	}
 
 	// Write agent config

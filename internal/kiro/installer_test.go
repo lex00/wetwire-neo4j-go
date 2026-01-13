@@ -55,6 +55,28 @@ func TestInstallConfig_WritesCorrectFormat(t *testing.T) {
 	if _, ok := mcpServers["wetwire-neo4j"]; !ok {
 		t.Error("mcpServers must contain 'wetwire-neo4j'")
 	}
+
+	// Must have allowedTools listing MCP tools
+	allowedTools, ok := agent["allowedTools"].([]any)
+	if !ok {
+		t.Fatal("agent config must have 'allowedTools' array")
+	}
+	if len(allowedTools) == 0 {
+		t.Error("allowedTools should not be empty")
+	}
+	// Verify expected tools are listed
+	toolSet := make(map[string]bool)
+	for _, tool := range allowedTools {
+		if s, ok := tool.(string); ok {
+			toolSet[s] = true
+		}
+	}
+	expectedTools := []string{"wetwire_init", "wetwire_build", "wetwire_lint"}
+	for _, expected := range expectedTools {
+		if !toolSet[expected] {
+			t.Errorf("allowedTools should contain %q", expected)
+		}
+	}
 }
 
 func TestInstallConfig_AgentFileExists(t *testing.T) {
