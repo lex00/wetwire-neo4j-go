@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/cli"
@@ -221,7 +222,26 @@ func newVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Show version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("wetwire-neo4j %s (commit: %s)\n", version, commit)
+			v := version
+			c := commit
+
+			// Try to get version from Go module info (set by go install module@version)
+			if info, ok := debug.ReadBuildInfo(); ok && v == "dev" {
+				if info.Main.Version != "" && info.Main.Version != "(devel)" {
+					v = info.Main.Version
+				}
+				// Get commit from build settings
+				for _, setting := range info.Settings {
+					if setting.Key == "vcs.revision" && c == "none" {
+						c = setting.Value
+						if len(c) > 7 {
+							c = c[:7]
+						}
+					}
+				}
+			}
+
+			fmt.Printf("wetwire-neo4j %s (commit: %s)\n", v, c)
 		},
 	}
 }
