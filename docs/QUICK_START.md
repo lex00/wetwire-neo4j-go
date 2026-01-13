@@ -79,7 +79,66 @@ var WorksFor = &schema.RelationshipType{
 }
 ```
 
-## Step 3: Lint Your Definitions
+## Step 3: Add Agent Context (Recommended)
+
+The key advantage of wetwire schemas is guiding AI agents. Add context to help agents generate better queries.
+
+### Schema-Level Context
+
+Create `schema/schema.go` to define global instructions:
+
+```go
+package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+// MySchema defines the complete schema with agent instructions.
+var MySchema = &schema.Schema{
+    Name:        "hr-database",
+    Description: "Human resources and organizational data",
+    Nodes:       []*schema.NodeType{Person, Company},
+    Relationships: []*schema.RelationshipType{WorksFor},
+
+    // Global instructions for AI agents
+    AgentContext: `
+        Multi-tenant database - always filter by tenantId property.
+        Ignore nodes with label prefix "_" (internal system nodes).
+        Prefer WORKS_FOR over legacy EMPLOYED_BY relationship.
+    `,
+}
+```
+
+### Resource-Level Hints
+
+Add hints to individual nodes and relationships:
+
+```go
+var Person = &schema.NodeType{
+    Label: "Person",
+    Properties: []schema.Property{
+        {Name: "id", Type: schema.STRING, Required: true},
+        {Name: "email", Type: schema.STRING},
+    },
+    // Agent-specific guidance for this node
+    AgentHint: "Query by email for uniqueness. Name field may have duplicates.",
+}
+
+var WorksFor = &schema.RelationshipType{
+    Label:  "WORKS_FOR",
+    Source: "Person",
+    Target: "Company",
+    // Agent-specific guidance for this relationship
+    AgentHint: "Canonical employment relationship. Prefer over EMPLOYED_BY (deprecated).",
+}
+```
+
+When agents read your schema, they'll use this context to:
+- Apply correct filters automatically
+- Choose the right relationships
+- Avoid internal/system nodes
+- Follow your data modeling conventions
+
+## Step 4: Lint Your Definitions
 
 ```bash
 wetwire-neo4j lint ./schema/
@@ -90,7 +149,7 @@ Expected output:
 0 issues found
 ```
 
-## Step 4: Generate Cypher
+## Step 5: Generate Cypher
 
 ```bash
 wetwire-neo4j build ./schema/
@@ -103,7 +162,7 @@ CREATE INDEX person_name_idx IF NOT EXISTS FOR (n:Person) ON (n.name);
 CREATE CONSTRAINT company_id_unique IF NOT EXISTS FOR (n:Company) REQUIRE n.id IS UNIQUE;
 ```
 
-## Step 5: List Discovered Resources
+## Step 6: List Discovered Resources
 
 ```bash
 wetwire-neo4j list ./schema/
@@ -117,7 +176,7 @@ Company   NodeType          schema/nodes.go         22
 WorksFor  RelationshipType  schema/relationships.go 7
 ```
 
-## Step 6: Add GDS Algorithm (Optional)
+## Step 7: Add GDS Algorithm (Optional)
 
 Create `algorithms/pagerank.go`:
 
@@ -143,7 +202,7 @@ Build again to generate the algorithm call:
 wetwire-neo4j build ./...
 ```
 
-## Step 7: Validate Against Neo4j (Optional)
+## Step 8: Validate Against Neo4j (Optional)
 
 If you have Neo4j running:
 
