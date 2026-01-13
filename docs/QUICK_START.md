@@ -16,10 +16,26 @@ go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
 ## Step 1: Create a Project
 
 ```bash
-mkdir my-neo4j-project
+# Initialize a new project with wetwire-neo4j
+wetwire-neo4j init my-neo4j-project
 cd my-neo4j-project
+
+# Initialize Go module and fetch dependencies
 go mod init my-neo4j-project
-go get github.com/lex00/wetwire-neo4j-go
+go mod tidy
+```
+
+This creates a project scaffold with starter schema, and directories for algorithms, pipelines, retrievers, and knowledge graphs.
+
+**Templates available:**
+- `--template default` - Basic schema only (default)
+- `--template gds` - Schema + algorithms + pipelines
+- `--template graphrag` - Schema + retrievers + KG pipelines
+- `--template full` - Everything
+
+```bash
+# Example: Create a GDS-focused project
+wetwire-neo4j init my-gds-project --template gds
 ```
 
 ## Step 2: Define Schema (or Import from Neo4j)
