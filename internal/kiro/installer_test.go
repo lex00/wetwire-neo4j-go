@@ -96,3 +96,50 @@ func TestInstallConfig_AgentFileExists(t *testing.T) {
 		t.Errorf("agent config file not created at %s", agentPath)
 	}
 }
+
+func TestInstallConfig_UsesFullPath(t *testing.T) {
+	tmpHome := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmpHome)
+	defer os.Setenv("HOME", origHome)
+
+	// Create a fake binary in ~/go/bin
+	goBin := filepath.Join(tmpHome, "go", "bin")
+	if err := os.MkdirAll(goBin, 0755); err != nil {
+		t.Fatalf("failed to create go/bin: %v", err)
+	}
+	fakeBinary := filepath.Join(goBin, "wetwire-neo4j")
+	if err := os.WriteFile(fakeBinary, []byte("#!/bin/sh\necho test"), 0755); err != nil {
+		t.Fatalf("failed to create fake binary: %v", err)
+	}
+
+	config := NewConfig()
+	err := InstallConfig(config)
+	if err != nil {
+		t.Fatalf("InstallConfig failed: %v", err)
+	}
+
+	// Read and verify the config uses full path
+	agentPath := filepath.Join(tmpHome, ".kiro", "agents", AgentName+".json")
+	data, err := os.ReadFile(agentPath)
+	if err != nil {
+		t.Fatalf("failed to read config: %v", err)
+	}
+
+	var agent map[string]any
+	if err := json.Unmarshal(data, &agent); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	mcpServers := agent["mcpServers"].(map[string]any)
+	server := mcpServers["wetwire-neo4j"].(map[string]any)
+	command := server["command"].(string)
+
+	// Should be full path, not just "wetwire-neo4j"
+	if command == "wetwire-neo4j" {
+		t.Errorf("expected full path to binary, got bare name: %s", command)
+	}
+	if command != fakeBinary {
+		t.Errorf("expected command %q, got %q", fakeBinary, command)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	corekiro "github.com/lex00/wetwire-core-go/kiro"
@@ -59,13 +60,25 @@ func InstallConfig(config corekiro.Config) error {
 		return fmt.Errorf("create agents dir: %w", err)
 	}
 
+	// Find the full path to the MCP command
+	mcpCommand := config.MCPCommand
+	if fullPath, err := exec.LookPath(config.MCPCommand); err == nil {
+		mcpCommand = fullPath
+	} else {
+		// Try common Go binary locations
+		goPath := filepath.Join(homeDir, "go", "bin", config.MCPCommand)
+		if _, err := os.Stat(goPath); err == nil {
+			mcpCommand = goPath
+		}
+	}
+
 	// Build agent config with correct field names
 	agent := kiroAgentJSON{
 		Name:   config.AgentName,
 		Prompt: config.AgentPrompt,
 		MCPServers: map[string]mcpServer{
 			"wetwire-neo4j": {
-				Command: config.MCPCommand,
+				Command: mcpCommand,
 				Args:    config.MCPArgs,
 			},
 		},
