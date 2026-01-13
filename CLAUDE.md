@@ -10,7 +10,7 @@ wetwire-neo4j-go is a synthesis library for Neo4j that generates Cypher statemen
 
 ```
 wetwire-neo4j-go/
-├── cmd/neo4j/          # CLI entry point
+├── cmd/wetwire-neo4j/  # CLI entry point
 ├── internal/
 │   ├── algorithms/     # GDS algorithm definitions
 │   ├── cli/            # CLI implementation

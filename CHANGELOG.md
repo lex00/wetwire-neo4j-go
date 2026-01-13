@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Pre-flight schema discovery for agent prompt injection in `cmd/neo4j`
+- Pre-flight schema discovery for agent prompt injection in `cmd/wetwire-neo4j`
   - Automatically discovers existing schema definitions before running `design` command
   - Injects summarized schema context into agent prompts (both Anthropic and Kiro providers)
   - Helps agents extend existing schemas rather than recreating them
   - `FormatSchemaContext()` function in `internal/discovery/context.go`
   - `Neo4jDomainWithContext()` and `NewConfigWithContext()` for context-aware configs
 
-- MCP server integration in `cmd/neo4j`
+- MCP server integration in `cmd/wetwire-neo4j`
   - Uses wetwire-core-go mcp package for protocol handling
   - `wetwire-neo4j design --mcp-server` starts MCP server on stdio
   - Implements standard wetwire tools: init, build, lint, validate, list, graph
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - MockValidator tests for labelExists, relationshipTypeExists
   - Full coverage of testable code (Neo4j connection-dependent code requires integration tests)
 
-- CLI command tests in `cmd/neo4j`
+- CLI command tests in `cmd/wetwire-neo4j`
   - Tests for list, validate, import, graph, version commands
   - Tests for command flags and execution
   - 14 test functions covering CLI layer
@@ -166,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dependency graph visualization
   - Full test coverage (27 test functions)
 
-- CLI entry point in `cmd/neo4j/main.go`
+- CLI entry point in `cmd/wetwire-neo4j/main.go`
   - `wetwire-neo4j build` - Build Cypher/JSON from definitions
   - `wetwire-neo4j lint` - Lint definitions for issues
   - `wetwire-neo4j list` - List discovered definitions

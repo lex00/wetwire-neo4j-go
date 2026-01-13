@@ -35,7 +35,7 @@ The core library provides the generic framework; this package implements Neo4j-s
 
 ```
 wetwire-neo4j-go/
-├── cmd/neo4j/              # CLI entry point
+├── cmd/wetwire-neo4j/      # CLI entry point
 ├── internal/               # Internal packages (not importable)
 │   ├── algorithms/         # GDS algorithm definitions
 │   ├── aura/               # Neo4j Aura cloud integration
@@ -214,7 +214,7 @@ CLI command implementations.
 | `initializer.go` | Init command - scaffold new projects |
 | `graph.go` | Graph command - visualize dependencies |
 
-### cmd/neo4j/
+### cmd/wetwire-neo4j/
 
 Main CLI entry point and command registration.
 
@@ -425,7 +425,7 @@ Used by:
 require github.com/spf13/cobra v1.10.2
 ```
 
-Used for command-line interface implementation in `cmd/neo4j/`.
+Used for command-line interface implementation in `cmd/wetwire-neo4j/`.
 
 ### Standard Library
 

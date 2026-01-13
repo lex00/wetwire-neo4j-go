@@ -139,6 +139,9 @@ type NodeType struct {
 	Indexes []Index
 	// Description is optional documentation for the node type.
 	Description string
+	// AgentHint provides instructions for AI agents when generating queries involving this node.
+	// Example: "Prefer querying by email for uniqueness" or "Internal node - exclude from user-facing queries"
+	AgentHint string
 }
 
 // RelationshipType represents a relationship type definition.
@@ -157,6 +160,26 @@ type RelationshipType struct {
 	Constraints []Constraint
 	// Description is optional documentation for the relationship type.
 	Description string
+	// AgentHint provides instructions for AI agents when generating queries involving this relationship.
+	// Example: "Canonical employment relationship - prefer over EMPLOYED_BY" or "Deprecated - use MANAGES instead"
+	AgentHint string
+}
+
+// Schema represents a complete schema definition with global agent context.
+// Use this to group related node and relationship types with shared instructions.
+type Schema struct {
+	// Name is an optional identifier for this schema.
+	Name string
+	// Description provides documentation for the schema.
+	Description string
+	// Nodes contains all node type definitions in this schema.
+	Nodes []*NodeType
+	// Relationships contains all relationship type definitions in this schema.
+	Relationships []*RelationshipType
+	// AgentContext provides global instructions for AI agents when working with this schema.
+	// This context applies to all queries and is injected into agent prompts.
+	// Example: "Multi-tenant database - always filter by tenantId. Ignore nodes prefixed with _ (internal)."
+	AgentContext string
 }
 
 // Point represents a Neo4j spatial point with coordinates.
@@ -186,6 +209,10 @@ func (n *NodeType) ResourceName() string { return n.Label }
 // Ensure RelationshipType implements Resource.
 func (r *RelationshipType) ResourceType() string { return "RelationshipType" }
 func (r *RelationshipType) ResourceName() string { return r.Label }
+
+// Ensure Schema implements Resource.
+func (s *Schema) ResourceType() string { return "Schema" }
+func (s *Schema) ResourceName() string { return s.Name }
 
 // PropertyValue represents a typed property value for validation.
 type PropertyValue struct {

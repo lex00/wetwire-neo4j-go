@@ -97,7 +97,7 @@ Install the [Go extension](https://marketplace.visualstudio.com/items?itemName=g
 
 ```
 wetwire-neo4j-go/
-├── cmd/neo4j/              # CLI entry point
+├── cmd/wetwire-neo4j/      # CLI entry point
 │   ├── main.go             # Main CLI setup with Cobra
 │   ├── domain.go           # Domain-specific subcommands
 │   ├── mcp.go              # MCP server subcommand
@@ -574,7 +574,7 @@ go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
 golangci-lint run ./...
 
 # Build CLI
-go build -o neo4j ./cmd/neo4j/
+go build -o wetwire-neo4j ./cmd/wetwire-neo4j/
 
 # Format code
 gofmt -w .
