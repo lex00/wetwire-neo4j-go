@@ -62,17 +62,17 @@ Example:
 				prompt = strings.Join(args, " ")
 			}
 
-			// Prompt is required for design mode
-			if prompt == "" {
-				return fmt.Errorf("prompt is required\n\nUsage:\n  wetwire-neo4j design \"Your prompt here\"\n  wetwire-neo4j design --prompt \"Your prompt here\"")
-			}
-
 			// Pre-flight discovery to find existing schema
 			schemaContext := discoverSchemaContext(outputDir)
 
-			// Handle provider selection
+			// Kiro provider - prompt optional (interactive mode)
 			if provider == "kiro" {
 				return launchKiroWithContext(schemaContext, prompt)
+			}
+
+			// Anthropic provider requires prompt
+			if prompt == "" {
+				return fmt.Errorf("prompt is required\n\nUsage:\n  wetwire-neo4j design \"Your prompt here\"\n  wetwire-neo4j design --prompt \"Your prompt here\"")
 			}
 
 			return runDesign(prompt, outputDir, maxLintCycles, stream, schemaContext)

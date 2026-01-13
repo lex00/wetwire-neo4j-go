@@ -393,3 +393,31 @@ func TestNewDesignCmd_PositionalPrompt(t *testing.T) {
 		t.Errorf("positional prompt should have been accepted, got: %v", err)
 	}
 }
+
+func TestNewDesignCmd_KiroProvider(t *testing.T) {
+	cmd := newDesignCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{"--provider", "kiro"})
+
+	err := cmd.Execute()
+	// Should NOT be "prompt is required" - kiro supports interactive mode
+	if err != nil && strings.Contains(err.Error(), "prompt is required") {
+		t.Errorf("kiro provider should not require prompt, got: %v", err)
+	}
+}
+
+func TestNewDesignCmd_KiroProviderWithPrompt(t *testing.T) {
+	cmd := newDesignCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{"--provider", "kiro", "design a schema"})
+
+	err := cmd.Execute()
+	// Should NOT be "prompt is required"
+	if err != nil && strings.Contains(err.Error(), "prompt is required") {
+		t.Errorf("kiro provider with prompt should work, got: %v", err)
+	}
+}
