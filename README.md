@@ -153,6 +153,16 @@ WHERE c.industry = 'tech'
 RETURN p.name, c.name, w.role
 ```
 
+### 4. Extend Schema with AI (Optional)
+
+Use the `design` command for AI-assisted schema modifications:
+
+```bash
+wetwire-neo4j design "Add a Project node and ASSIGNED_TO relationship"
+```
+
+The agent automatically discovers your existing schema and extends it correctly - no need to re-explain what exists.
+
 ### Why Go Schema Instead of JSON?
 
 | Aspect | JSON Schema | Go Schema |
@@ -274,21 +284,62 @@ wetwire-neo4j-go/
 └── examples/           # Reference examples
 ```
 
-## Kiro CLI Integration
+## AI-Assisted Schema Design
 
-wetwire-neo4j works with [Kiro CLI](https://kiro.dev) for AI-assisted schema design:
+The `design` command provides AI-assisted schema generation with automatic schema awareness:
 
 ```bash
-# Auto-configure and start Kiro design session
-wetwire-neo4j design --provider kiro "Create a social network schema"
+# Start an AI design session (Anthropic API)
+wetwire-neo4j design "Create a social network schema"
+
+# Or use Kiro CLI
+wetwire-neo4j design --provider kiro "Add audit logging to my schema"
 ```
 
-The MCP server (`wetwire-neo4j mcp`) exposes three tools to Kiro:
+### Pre-flight Schema Discovery
+
+When you run `design`, the CLI automatically scans your project for existing schema definitions and injects them into the agent's context. This means:
+
+- **Agents know what exists** - The AI sees your current nodes, relationships, and algorithms
+- **Extend, don't recreate** - Agents add to your schema rather than starting from scratch
+- **Works with imports** - Schemas imported from Neo4j are automatically discovered
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. You have existing schema (manual or imported)           │
+│     schema/person.go, schema/company.go                     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. Run design command                                      │
+│     wetwire-neo4j design "Add audit logging"                │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. Agent sees existing schema in its prompt                │
+│     "Existing: Person, Company, WORKS_FOR..."               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. Agent extends your schema correctly                     │
+│     Adds AuditLog node, AUDITED_BY relationship             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The schema context is summarized (name + file location) to keep prompts lean. Agents can use `wetwire_list` or read source files for full property details.
+
+### MCP Tools
+
+The MCP server (`wetwire-neo4j mcp`) exposes tools for AI agents:
 - `wetwire_init` - Initialize a new project
 - `wetwire_lint` - Validate schema definitions
 - `wetwire_build` - Generate Cypher and JSON configs
+- `wetwire_list` - List discovered resources with details
 
-See [docs/NEO4J-KIRO-CLI.md](docs/NEO4J-KIRO-CLI.md) for complete integration guide.
+See [docs/NEO4J-KIRO-CLI.md](docs/NEO4J-KIRO-CLI.md) for complete Kiro integration guide.
 
 ## Integration with wetwire-core-go
 
