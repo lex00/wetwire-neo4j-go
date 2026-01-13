@@ -320,3 +320,76 @@ var Person = &schema.NodeType{
 		t.Errorf("list json command failed: %v", err)
 	}
 }
+
+func TestNewDesignCmd(t *testing.T) {
+	cmd := newDesignCmd()
+
+	if cmd.Use != "design [prompt]" {
+		t.Errorf("expected Use 'design [prompt]', got %s", cmd.Use)
+	}
+	if cmd.Short == "" {
+		t.Error("expected Short description")
+	}
+
+	// Check flags exist
+	flags := []string{"output", "max-lint-cycles", "stream", "provider", "prompt"}
+	for _, flag := range flags {
+		if cmd.Flags().Lookup(flag) == nil {
+			t.Errorf("expected %s flag", flag)
+		}
+	}
+}
+
+func TestNewDesignCmd_NoPrompt(t *testing.T) {
+	cmd := newDesignCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Error("expected error when no prompt provided")
+	}
+	if !strings.Contains(err.Error(), "prompt is required") {
+		t.Errorf("expected 'prompt is required' error, got: %v", err)
+	}
+}
+
+func TestNewDesignCmd_PromptFlag(t *testing.T) {
+	cmd := newDesignCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{"--prompt", "test prompt"})
+
+	// Will fail because ANTHROPIC_API_KEY is not set, but that's expected
+	// We're just testing that the prompt flag is accepted
+	err := cmd.Execute()
+	if err == nil {
+		t.Skip("unexpected success - ANTHROPIC_API_KEY must be set")
+	}
+	// Should NOT be "prompt is required" error
+	if strings.Contains(err.Error(), "prompt is required") {
+		t.Errorf("--prompt flag should have been accepted, got: %v", err)
+	}
+}
+
+func TestNewDesignCmd_PositionalPrompt(t *testing.T) {
+	cmd := newDesignCmd()
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{"test prompt"})
+
+	// Will fail because ANTHROPIC_API_KEY is not set, but that's expected
+	// We're just testing that positional prompt is accepted
+	err := cmd.Execute()
+	if err == nil {
+		t.Skip("unexpected success - ANTHROPIC_API_KEY must be set")
+	}
+	// Should NOT be "prompt is required" error
+	if strings.Contains(err.Error(), "prompt is required") {
+		t.Errorf("positional prompt should have been accepted, got: %v", err)
+	}
+}
