@@ -22,7 +22,37 @@ go mod init my-neo4j-project
 go get github.com/lex00/wetwire-neo4j-go
 ```
 
-## Step 2: Define Schema
+## Step 2: Define Schema (or Import from Neo4j)
+
+You can define your schema from scratch, or import from an existing Neo4j database.
+
+### Option A: Import from Existing Database
+
+If you already have a Neo4j database, import the schema directly:
+
+```bash
+# Import from a live Neo4j instance
+wetwire-neo4j import \
+  --uri bolt://localhost:7687 \
+  --username neo4j \
+  --password your-password \
+  --database neo4j \
+  --package schema \
+  --output schema/generated.go
+```
+
+This discovers all node labels, relationship types, properties, constraints, and indexes from your database.
+
+You can also import from a Cypher file:
+
+```bash
+# Import from a Cypher DDL file
+wetwire-neo4j import --file ./existing-schema.cypher --output schema/generated.go
+```
+
+After importing, add `AgentContext` and `AgentHint` fields (see Step 3) to guide AI agents.
+
+### Option B: Define from Scratch
 
 Create `schema/nodes.go`:
 
