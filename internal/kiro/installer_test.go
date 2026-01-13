@@ -71,7 +71,7 @@ func TestInstallConfig_WritesCorrectFormat(t *testing.T) {
 			toolSet[s] = true
 		}
 	}
-	expectedTools := []string{"wetwire_init", "wetwire_build", "wetwire_lint"}
+	expectedTools := []string{"wetwire-neo4j:wetwire_init", "wetwire-neo4j:wetwire_build", "wetwire-neo4j:wetwire_lint"}
 	for _, expected := range expectedTools {
 		if !toolSet[expected] {
 			t.Errorf("allowedTools should contain %q", expected)

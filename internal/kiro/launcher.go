@@ -11,12 +11,8 @@ import (
 
 // LaunchChat launches an interactive Kiro CLI chat session with the wetwire-neo4j agent.
 // It connects stdin/stdout directly to the terminal for interactive use.
+// Note: Caller should install config first via InstallConfig if custom context is needed.
 func LaunchChat(agentName, initialPrompt string) error {
-	// Ensure latest config is installed
-	if err := EnsureInstalledWithForce(true); err != nil {
-		return fmt.Errorf("installing kiro config: %w", err)
-	}
-
 	// Build kiro-cli-chat command with prompt as positional argument
 	// Usage: kiro-cli-chat chat --agent <AGENT> [INPUT]
 	args := []string{"chat", "--agent", agentName}
