@@ -26,6 +26,7 @@ func newDesignCmd() *cobra.Command {
 	var stream bool
 	var mcpServer bool
 	var provider string
+	var promptFlag string
 
 	cmd := &cobra.Command{
 		Use:   "design [prompt]",
@@ -44,8 +45,8 @@ Providers:
 
 Example:
     wetwire-neo4j design "Create a social network schema with Person nodes and KNOWS relationships"
-    wetwire-neo4j design --provider kiro "Set up PageRank on my user graph"
-    wetwire-neo4j design "Create a document store with vector embeddings for RAG"`,
+    wetwire-neo4j design --prompt "Set up PageRank on my user graph"
+    wetwire-neo4j design --provider kiro "Create a document store with vector embeddings for RAG"`,
 		Args: cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// MCP server mode - run as stdio MCP server
@@ -53,12 +54,18 @@ Example:
 				return runMCPServer()
 			}
 
-			// Interactive mode requires a prompt
-			if len(args) == 0 {
-				return fmt.Errorf("prompt is required (or use --mcp-server)")
+			// Get prompt from flag or positional args
+			var prompt string
+			if promptFlag != "" {
+				prompt = promptFlag
+			} else if len(args) > 0 {
+				prompt = strings.Join(args, " ")
 			}
 
-			prompt := strings.Join(args, " ")
+			// Prompt is required for design mode
+			if prompt == "" {
+				return fmt.Errorf("prompt is required\n\nUsage:\n  wetwire-neo4j design \"Your prompt here\"\n  wetwire-neo4j design --prompt \"Your prompt here\"")
+			}
 
 			// Pre-flight discovery to find existing schema
 			schemaContext := discoverSchemaContext(outputDir)
@@ -76,6 +83,7 @@ Example:
 	cmd.Flags().IntVarP(&maxLintCycles, "max-lint-cycles", "l", 3, "Maximum lint/fix cycles")
 	cmd.Flags().BoolVarP(&stream, "stream", "s", true, "Stream AI responses")
 	cmd.Flags().StringVar(&provider, "provider", "anthropic", "AI provider (anthropic, kiro)")
+	cmd.Flags().StringVarP(&promptFlag, "prompt", "p", "", "Design prompt (alternative to positional argument)")
 	cmd.Flags().BoolVar(&mcpServer, "mcp-server", false, "Run as MCP server on stdio")
 	_ = cmd.Flags().MarkHidden("mcp-server")
 
