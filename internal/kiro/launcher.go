@@ -3,6 +3,8 @@ package kiro
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 
 	corekiro "github.com/lex00/wetwire-core-go/kiro"
 )
@@ -15,9 +17,19 @@ func LaunchChat(agentName, initialPrompt string) error {
 		return fmt.Errorf("installing kiro config: %w", err)
 	}
 
-	// Use core kiro package to launch
-	config := NewConfig()
-	return corekiro.Launch(context.Background(), config, initialPrompt)
+	// Build kiro-cli-chat command with prompt as positional argument
+	// Usage: kiro-cli-chat chat --agent <AGENT> [INPUT]
+	args := []string{"chat", "--agent", agentName}
+	if initialPrompt != "" {
+		args = append(args, initialPrompt)
+	}
+
+	cmd := exec.Command("kiro-cli-chat", args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
 
 // RunTest runs the Kiro agent in non-interactive test mode.
