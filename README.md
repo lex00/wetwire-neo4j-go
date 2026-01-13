@@ -32,7 +32,7 @@ Define Schema (Go) → Validate (lint) → Agent Reads Schema → Generates Corr
 ## Installation
 
 ```bash
-go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
+go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
 ```
 
 ## Quick Start
@@ -267,7 +267,7 @@ The `examples/` directory contains comprehensive examples:
 
 ```
 wetwire-neo4j-go/
-├── cmd/neo4j/          # CLI entry point
+├── cmd/wetwire-neo4j/  # CLI entry point
 ├── internal/
 │   ├── algorithms/     # GDS algorithm definitions
 │   ├── cli/            # CLI implementation (build, lint, list)

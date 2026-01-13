@@ -10,7 +10,7 @@ This guide walks you through creating your first Neo4j configuration with wetwir
 ## Installation
 
 ```bash
-go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
+go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
 ```
 
 ## Step 1: Create a Project

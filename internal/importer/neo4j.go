@@ -59,6 +59,18 @@ func (i *Neo4jImporter) Import(ctx context.Context) (*ImportResult, error) {
 		Indexes:           make([]IndexDefinition, 0),
 	}
 
+	// Fetch all node labels
+	nodeLabels, err := i.fetchNodeLabels(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch node labels: %w", err)
+	}
+
+	// Fetch all relationship types
+	relTypes, err := i.fetchRelationshipTypes(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch relationship types: %w", err)
+	}
+
 	// Fetch constraints
 	constraints, err := i.fetchConstraints(ctx)
 	if err != nil {
@@ -73,10 +85,163 @@ func (i *Neo4jImporter) Import(ctx context.Context) (*ImportResult, error) {
 	}
 	result.Indexes = indexes
 
-	// Build node and relationship type definitions from constraints and indexes
-	result.NodeTypes, result.RelationshipTypes = i.buildTypeDefinitions(constraints, indexes)
+	// Fetch properties for all node labels
+	nodeProperties, err := i.fetchNodeProperties(ctx, nodeLabels)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch node properties: %w", err)
+	}
+
+	// Fetch properties for all relationship types
+	relProperties, err := i.fetchRelationshipProperties(ctx, relTypes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch relationship properties: %w", err)
+	}
+
+	// Build node and relationship type definitions
+	result.NodeTypes, result.RelationshipTypes = i.buildTypeDefinitions(
+		nodeLabels, relTypes, constraints, indexes, nodeProperties, relProperties,
+	)
 
 	return result, nil
+}
+
+func (i *Neo4jImporter) fetchNodeLabels(ctx context.Context) ([]string, error) {
+	session := i.driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: i.database})
+	defer func() { _ = session.Close(ctx) }()
+
+	result, err := session.Run(ctx, "CALL db.labels()", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var labels []string
+	for result.Next(ctx) {
+		record := result.Record()
+		if label, ok := record.Values[0].(string); ok {
+			labels = append(labels, label)
+		}
+	}
+
+	return labels, result.Err()
+}
+
+func (i *Neo4jImporter) fetchRelationshipTypes(ctx context.Context) ([]string, error) {
+	session := i.driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: i.database})
+	defer func() { _ = session.Close(ctx) }()
+
+	result, err := session.Run(ctx, "CALL db.relationshipTypes()", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var types []string
+	for result.Next(ctx) {
+		record := result.Record()
+		if relType, ok := record.Values[0].(string); ok {
+			types = append(types, relType)
+		}
+	}
+
+	return types, result.Err()
+}
+
+func (i *Neo4jImporter) fetchNodeProperties(ctx context.Context, labels []string) (map[string][]PropertyDefinition, error) {
+	properties := make(map[string][]PropertyDefinition)
+
+	for _, label := range labels {
+		props, err := i.fetchPropertiesForLabel(ctx, label)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch properties for label %s: %w", label, err)
+		}
+		properties[label] = props
+	}
+
+	return properties, nil
+}
+
+func (i *Neo4jImporter) fetchPropertiesForLabel(ctx context.Context, label string) ([]PropertyDefinition, error) {
+	session := i.driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: i.database})
+	defer func() { _ = session.Close(ctx) }()
+
+	// Sample a node to discover properties and their types
+	query := fmt.Sprintf("MATCH (n:`%s`) RETURN n LIMIT 1", label)
+	result, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var props []PropertyDefinition
+	if result.Next(ctx) {
+		record := result.Record()
+		if node, ok := record.Values[0].(neo4j.Node); ok {
+			for key, value := range node.Props {
+				props = append(props, PropertyDefinition{
+					Name: key,
+					Type: inferNeo4jType(value),
+				})
+			}
+		}
+	}
+
+	return props, result.Err()
+}
+
+func (i *Neo4jImporter) fetchRelationshipProperties(ctx context.Context, relTypes []string) (map[string][]PropertyDefinition, error) {
+	properties := make(map[string][]PropertyDefinition)
+
+	for _, relType := range relTypes {
+		props, err := i.fetchPropertiesForRelType(ctx, relType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch properties for relationship type %s: %w", relType, err)
+		}
+		properties[relType] = props
+	}
+
+	return properties, nil
+}
+
+func (i *Neo4jImporter) fetchPropertiesForRelType(ctx context.Context, relType string) ([]PropertyDefinition, error) {
+	session := i.driver.NewSession(ctx, neo4j.SessionConfig{DatabaseName: i.database})
+	defer func() { _ = session.Close(ctx) }()
+
+	// Sample a relationship to discover properties and their types
+	query := fmt.Sprintf("MATCH ()-[r:`%s`]->() RETURN r LIMIT 1", relType)
+	result, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var props []PropertyDefinition
+	if result.Next(ctx) {
+		record := result.Record()
+		if rel, ok := record.Values[0].(neo4j.Relationship); ok {
+			for key, value := range rel.Props {
+				props = append(props, PropertyDefinition{
+					Name: key,
+					Type: inferNeo4jType(value),
+				})
+			}
+		}
+	}
+
+	return props, result.Err()
+}
+
+func inferNeo4jType(value any) string {
+	switch value.(type) {
+	case string:
+		return "STRING"
+	case int64:
+		return "INTEGER"
+	case float64:
+		return "FLOAT"
+	case bool:
+		return "BOOLEAN"
+	case []any:
+		return "LIST"
+	default:
+		return "STRING"
+	}
 }
 
 func (i *Neo4jImporter) fetchConstraints(ctx context.Context) ([]ConstraintDefinition, error) {
@@ -171,92 +336,79 @@ func (i *Neo4jImporter) fetchIndexes(ctx context.Context) ([]IndexDefinition, er
 	return indexes, result.Err()
 }
 
-func (i *Neo4jImporter) buildTypeDefinitions(constraints []ConstraintDefinition, indexes []IndexDefinition) ([]NodeTypeDefinition, []RelationshipTypeDefinition) {
+func (i *Neo4jImporter) buildTypeDefinitions(
+	nodeLabels []string,
+	relationshipTypes []string,
+	constraints []ConstraintDefinition,
+	indexes []IndexDefinition,
+	nodeProperties map[string][]PropertyDefinition,
+	relProperties map[string][]PropertyDefinition,
+) ([]NodeTypeDefinition, []RelationshipTypeDefinition) {
 	nodeTypes := make(map[string]*NodeTypeDefinition)
 	relTypes := make(map[string]*RelationshipTypeDefinition)
+
+	// Initialize all node labels from db.labels()
+	for _, label := range nodeLabels {
+		nodeTypes[label] = &NodeTypeDefinition{
+			Label:       label,
+			Properties:  make([]PropertyDefinition, 0),
+			Constraints: make([]ConstraintDefinition, 0),
+			Indexes:     make([]IndexDefinition, 0),
+		}
+		// Add properties discovered from sampling
+		if props, ok := nodeProperties[label]; ok {
+			nodeTypes[label].Properties = append(nodeTypes[label].Properties, props...)
+		}
+	}
+
+	// Initialize all relationship types from db.relationshipTypes()
+	for _, relType := range relationshipTypes {
+		relTypes[relType] = &RelationshipTypeDefinition{
+			Type:        relType,
+			Properties:  make([]PropertyDefinition, 0),
+			Constraints: make([]ConstraintDefinition, 0),
+			Indexes:     make([]IndexDefinition, 0),
+		}
+		// Add properties discovered from sampling
+		if props, ok := relProperties[relType]; ok {
+			relTypes[relType].Properties = append(relTypes[relType].Properties, props...)
+		}
+	}
 
 	// Process constraints
 	for _, c := range constraints {
 		if c.EntityType == "NODE" {
-			if _, exists := nodeTypes[c.Label]; !exists {
-				nodeTypes[c.Label] = &NodeTypeDefinition{
-					Label:       c.Label,
-					Properties:  make([]PropertyDefinition, 0),
-					Constraints: make([]ConstraintDefinition, 0),
-					Indexes:     make([]IndexDefinition, 0),
-				}
-			}
-			nodeTypes[c.Label].Constraints = append(nodeTypes[c.Label].Constraints, c)
+			if node, exists := nodeTypes[c.Label]; exists {
+				node.Constraints = append(node.Constraints, c)
 
-			// Add properties from constraints
-			for _, prop := range c.Properties {
-				found := false
-				for _, existing := range nodeTypes[c.Label].Properties {
-					if existing.Name == prop {
-						found = true
-						break
+				// Mark properties as required if they have existence constraints
+				for _, prop := range c.Properties {
+					if c.Type == "NODE_PROPERTY_EXISTENCE" || c.Type == "NODE_KEY" {
+						for i := range node.Properties {
+							if node.Properties[i].Name == prop {
+								node.Properties[i].Required = true
+							}
+						}
 					}
-				}
-				if !found {
-					nodeTypes[c.Label].Properties = append(nodeTypes[c.Label].Properties, PropertyDefinition{
-						Name:     prop,
-						Type:     "STRING", // Default type
-						Required: c.Type == "NODE_PROPERTY_EXISTENCE" || c.Type == "NODE_KEY",
-					})
 				}
 			}
 		} else if c.EntityType == "RELATIONSHIP" {
-			if _, exists := relTypes[c.Label]; !exists {
-				relTypes[c.Label] = &RelationshipTypeDefinition{
-					Type:        c.Label,
-					Properties:  make([]PropertyDefinition, 0),
-					Constraints: make([]ConstraintDefinition, 0),
-					Indexes:     make([]IndexDefinition, 0),
-				}
+			if rel, exists := relTypes[c.Label]; exists {
+				rel.Constraints = append(rel.Constraints, c)
 			}
-			relTypes[c.Label].Constraints = append(relTypes[c.Label].Constraints, c)
 		}
 	}
 
 	// Process indexes
 	for _, idx := range indexes {
 		if idx.EntityType == "NODE" {
-			if _, exists := nodeTypes[idx.Label]; !exists {
-				nodeTypes[idx.Label] = &NodeTypeDefinition{
-					Label:       idx.Label,
-					Properties:  make([]PropertyDefinition, 0),
-					Constraints: make([]ConstraintDefinition, 0),
-					Indexes:     make([]IndexDefinition, 0),
-				}
-			}
-			nodeTypes[idx.Label].Indexes = append(nodeTypes[idx.Label].Indexes, idx)
-
-			// Add properties from indexes
-			for _, prop := range idx.Properties {
-				found := false
-				for _, existing := range nodeTypes[idx.Label].Properties {
-					if existing.Name == prop {
-						found = true
-						break
-					}
-				}
-				if !found {
-					nodeTypes[idx.Label].Properties = append(nodeTypes[idx.Label].Properties, PropertyDefinition{
-						Name: prop,
-						Type: "STRING",
-					})
-				}
+			if node, exists := nodeTypes[idx.Label]; exists {
+				node.Indexes = append(node.Indexes, idx)
 			}
 		} else if idx.EntityType == "RELATIONSHIP" {
-			if _, exists := relTypes[idx.Label]; !exists {
-				relTypes[idx.Label] = &RelationshipTypeDefinition{
-					Type:        idx.Label,
-					Properties:  make([]PropertyDefinition, 0),
-					Constraints: make([]ConstraintDefinition, 0),
-					Indexes:     make([]IndexDefinition, 0),
-				}
+			if rel, exists := relTypes[idx.Label]; exists {
+				rel.Indexes = append(rel.Indexes, idx)
 			}
-			relTypes[idx.Label].Indexes = append(relTypes[idx.Label].Indexes, idx)
 		}
 	}
 

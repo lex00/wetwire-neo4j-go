@@ -15,7 +15,7 @@ Use Kiro CLI with wetwire-neo4j for AI-assisted graph schema design and GDS algo
 ### Option A: Using Go (recommended)
 
 ```bash
-go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
+go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
 ```
 
 ### Option B: Pre-built binaries
@@ -236,7 +236,7 @@ Mcp error: -32002: No such file or directory
 which wetwire-neo4j
 
 # If not found, add to PATH or reinstall
-go install github.com/lex00/wetwire-neo4j-go/cmd/neo4j@latest
+go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
 ```
 
 ### Kiro CLI not found
