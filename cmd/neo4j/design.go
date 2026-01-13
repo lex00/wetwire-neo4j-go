@@ -13,6 +13,7 @@ import (
 	"github.com/lex00/wetwire-core-go/agent/agents"
 	"github.com/lex00/wetwire-core-go/agent/orchestrator"
 	"github.com/lex00/wetwire-core-go/agent/results"
+	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 	"github.com/lex00/wetwire-neo4j-go/internal/kiro"
 	"github.com/spf13/cobra"
 )
@@ -59,12 +60,15 @@ Example:
 
 			prompt := strings.Join(args, " ")
 
+			// Pre-flight discovery to find existing schema
+			schemaContext := discoverSchemaContext(outputDir)
+
 			// Handle provider selection
 			if provider == "kiro" {
-				return kiro.LaunchChat(kiro.AgentName, prompt)
+				return launchKiroWithContext(schemaContext, prompt)
 			}
 
-			return runDesign(prompt, outputDir, maxLintCycles, stream)
+			return runDesign(prompt, outputDir, maxLintCycles, stream, schemaContext)
 		},
 	}
 
@@ -78,9 +82,31 @@ Example:
 	return cmd
 }
 
+// discoverSchemaContext scans the output directory for existing schema definitions
+// and formats them as context for the agent prompt.
+func discoverSchemaContext(dir string) string {
+	scanner := discovery.NewScanner()
+	resources, err := scanner.ScanDir(dir)
+	if err != nil {
+		// Log warning but continue without context
+		fmt.Fprintf(os.Stderr, "Warning: could not scan for existing schema: %v\n", err)
+		return ""
+	}
+	return discovery.FormatSchemaContext(resources)
+}
+
+// launchKiroWithContext launches Kiro chat with schema context injected into the config.
+func launchKiroWithContext(schemaContext, prompt string) error {
+	config := kiro.NewConfigWithContext(schemaContext)
+	if err := kiro.InstallConfig(config); err != nil {
+		return fmt.Errorf("installing Kiro config: %w", err)
+	}
+	return kiro.LaunchChat(kiro.AgentName, prompt)
+}
+
 // runDesign runs an interactive design session using the Anthropic API.
 // It creates a runner agent that generates code, runs the linter, and fixes issues.
-func runDesign(prompt, outputDir string, maxLintCycles int, stream bool) error {
+func runDesign(prompt, outputDir string, maxLintCycles int, stream bool, schemaContext string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -110,14 +136,14 @@ func runDesign(prompt, outputDir string, maxLintCycles int, stream bool) error {
 		}
 	}
 
-	// Create runner agent with Neo4j domain
+	// Create runner agent with Neo4j domain (including any discovered schema context)
 	runner, err := agents.NewRunnerAgent(agents.RunnerConfig{
 		WorkDir:       outputDir,
 		MaxLintCycles: maxLintCycles,
 		Session:       session,
 		Developer:     developer,
 		StreamHandler: streamHandler,
-		Domain:        Neo4jDomain(),
+		Domain:        Neo4jDomainWithContext(schemaContext),
 	})
 	if err != nil {
 		return fmt.Errorf("creating runner: %w", err)

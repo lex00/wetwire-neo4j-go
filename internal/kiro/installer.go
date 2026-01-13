@@ -15,6 +15,12 @@ func EnsureInstalled() error {
 // If force is true, overwrites any existing configuration.
 func EnsureInstalledWithForce(force bool) error {
 	config := NewConfig()
+	return InstallConfig(config)
+}
+
+// InstallConfig installs a specific Kiro configuration.
+// This allows installing configurations with custom schema context.
+func InstallConfig(config corekiro.Config) error {
 	if err := corekiro.Install(config); err != nil {
 		return fmt.Errorf("install kiro config: %w", err)
 	}

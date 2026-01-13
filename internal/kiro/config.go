@@ -72,10 +72,22 @@ var MCPArgs = []string{"mcp"}
 
 // NewConfig creates a new Kiro config for the wetwire-neo4j agent.
 func NewConfig() corekiro.Config {
+	return NewConfigWithContext("")
+}
+
+// NewConfigWithContext creates a new Kiro config with optional schema context.
+// If schemaContext is non-empty, it is prepended to the agent prompt to inform
+// the agent about existing schema definitions in the project.
+func NewConfigWithContext(schemaContext string) corekiro.Config {
+	prompt := AgentPrompt
+	if schemaContext != "" {
+		prompt = schemaContext + "\n\n" + AgentPrompt
+	}
+
 	workDir, _ := os.Getwd()
 	return corekiro.Config{
 		AgentName:   AgentName,
-		AgentPrompt: AgentPrompt,
+		AgentPrompt: prompt,
 		MCPCommand:  MCPCommand,
 		MCPArgs:     MCPArgs,
 		WorkDir:     workDir,
