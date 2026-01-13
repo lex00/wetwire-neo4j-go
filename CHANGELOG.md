@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Pre-flight schema discovery for agent prompt injection in `cmd/neo4j`
+  - Automatically discovers existing schema definitions before running `design` command
+  - Injects summarized schema context into agent prompts (both Anthropic and Kiro providers)
+  - Helps agents extend existing schemas rather than recreating them
+  - `FormatSchemaContext()` function in `internal/discovery/context.go`
+  - `Neo4jDomainWithContext()` and `NewConfigWithContext()` for context-aware configs
+
 - MCP server integration in `cmd/neo4j`
   - Uses wetwire-core-go mcp package for protocol handling
   - `wetwire-neo4j design --mcp-server` starts MCP server on stdio
