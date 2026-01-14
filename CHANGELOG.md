@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.9] - 2026-01-13
+
+### Added
+
+- Property details in `wetwire_list` MCP tool output
+  - Shows properties with name, type, and required flag
+  - Shows constraints with type and properties
+  - Shows indexes with type and properties
+  - Shows source/target for relationship types
+  - AST extraction methods in `internal/discovery`
+
+### Fixed
+
+- Importer generates valid Go code for nodes with multiple constraints/indexes
+  - Previously wrote duplicate struct fields causing compile errors
+  - Now combines all constraints and indexes into single blocks
+
+## [1.5.8] - 2026-01-13
+
 ### Added
 
 - Pre-flight schema discovery for agent prompt injection in `cmd/wetwire-neo4j`
