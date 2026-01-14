@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.12] - 2026-01-13
+
+### Added
+
+- `wetwire_read` MCP tool for reading schema source files
+  - Allows agents to read full file contents when wetwire_list summary isn't sufficient
+  - Security: Only allows safe file types (.go, .mod, .cypher, .json, .yaml, .md, .txt)
+
 ## [1.5.11] - 2026-01-13
 
 ### Added
