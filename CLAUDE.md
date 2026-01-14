@@ -2,6 +2,21 @@
 
 This document provides AI assistant guidelines for working with wetwire-neo4j-go.
 
+## MANDATORY: Git Workflow
+
+**All code changes MUST follow this workflow - no exceptions:**
+
+1. **Create GitHub issue first** - Before writing any code, create an issue describing the bug/feature
+2. **Create feature branch** - Branch from main with descriptive name: `fix/issue-description` or `feat/feature-name`
+3. **Make changes on feature branch** - Never commit directly to main
+4. **Create PR** - Link to the issue, include description and test plan
+5. **Wait for confirmation** - Do not cut releases until the user confirms the fix works
+
+**Never:**
+- Commit directly to main
+- Cut a release without user confirmation that the fix works
+- Skip creating an issue for non-trivial changes
+
 ## Overview
 
 wetwire-neo4j-go is a synthesis library for Neo4j that generates Cypher statements and JSON configurations from native Go definitions. It follows the wetwire pattern: declare infrastructure in native code, then synthesize deployment artifacts.

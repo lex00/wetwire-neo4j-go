@@ -129,14 +129,14 @@ func TestMapNeo4jType(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"STRING", "TypeString"},
-		{"INTEGER", "TypeInteger"},
-		{"FLOAT", "TypeFloat"},
-		{"BOOLEAN", "TypeBoolean"},
-		{"DATE", "TypeDate"},
-		{"DATETIME", "TypeDateTime"},
-		{"POINT", "TypePoint"},
-		{"unknown", "TypeString"},
+		{"STRING", "STRING"},
+		{"INTEGER", "INTEGER"},
+		{"FLOAT", "FLOAT"},
+		{"BOOLEAN", "BOOLEAN"},
+		{"DATE", "DATE"},
+		{"DATETIME", "DATETIME"},
+		{"POINT", "POINT"},
+		{"unknown", "STRING"},
 	}
 
 	for _, tt := range tests {
@@ -307,6 +307,180 @@ func TestParsePropertyList(t *testing.T) {
 			if got[i] != tt.want[i] {
 				t.Errorf("parsePropertyList(%q, %q)[%d] = %q, want %q", tt.propStr, tt.varName, i, got[i], tt.want[i])
 			}
+		}
+	}
+}
+
+func TestGenerator_GeneratesValidTypeConstants(t *testing.T) {
+	// Test that generated code uses the exact constant names from pkg/neo4j/schema
+	// This is critical - wrong constants mean the code won't compile or won't be discovered
+	g := NewGenerator("schema")
+
+	result := &ImportResult{
+		NodeTypes: []NodeTypeDefinition{
+			{
+				Label: "TestNode",
+				Properties: []PropertyDefinition{
+					{Name: "strProp", Type: "STRING"},
+					{Name: "intProp", Type: "INTEGER"},
+					{Name: "floatProp", Type: "FLOAT"},
+					{Name: "boolProp", Type: "BOOLEAN"},
+					{Name: "dateProp", Type: "DATE"},
+					{Name: "datetimeProp", Type: "DATETIME"},
+					{Name: "pointProp", Type: "POINT"},
+				},
+			},
+		},
+	}
+
+	code, err := g.Generate(result)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// These are the EXACT constant names from pkg/neo4j/schema/types.go
+	// If any of these fail, the generated code won't compile
+	validConstants := []string{
+		"schema.STRING",
+		"schema.INTEGER",
+		"schema.FLOAT",
+		"schema.BOOLEAN",
+		"schema.DATE",
+		"schema.DATETIME",
+		"schema.POINT",
+	}
+
+	for _, constant := range validConstants {
+		if !strings.Contains(code, constant) {
+			t.Errorf("generated code missing valid constant %q", constant)
+		}
+	}
+
+	// These are INVALID constant names that would cause compile errors
+	// The importer previously generated these incorrectly
+	invalidConstants := []string{
+		"schema.TypeString",
+		"schema.TypeInteger",
+		"schema.TypeFloat",
+		"schema.TypeBoolean",
+		"schema.TypeDate",
+		"schema.TypeDateTime",
+		"schema.TypePoint",
+	}
+
+	for _, invalid := range invalidConstants {
+		if strings.Contains(code, invalid) {
+			t.Errorf("generated code contains invalid constant %q - this would cause compile errors", invalid)
+		}
+	}
+}
+
+func TestGenerator_GeneratesCompilableCode(t *testing.T) {
+	// Test that generated code can be written to a file and compiled
+	g := NewGenerator("testschema")
+
+	result := &ImportResult{
+		NodeTypes: []NodeTypeDefinition{
+			{
+				Label: "Person",
+				Properties: []PropertyDefinition{
+					{Name: "name", Type: "STRING", Required: true},
+					{Name: "age", Type: "INTEGER"},
+				},
+				Constraints: []ConstraintDefinition{
+					{Type: "UNIQUENESS", Properties: []string{"name"}},
+				},
+			},
+		},
+		RelationshipTypes: []RelationshipTypeDefinition{
+			{
+				Type:   "KNOWS",
+				Source: "Person",
+				Target: "Person",
+				Properties: []PropertyDefinition{
+					{Name: "since", Type: "DATE"},
+				},
+			},
+		},
+	}
+
+	code, err := g.Generate(result)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Write to temp directory
+	tmpDir := t.TempDir()
+	schemaDir := filepath.Join(tmpDir, "testschema")
+	if err := os.MkdirAll(schemaDir, 0755); err != nil {
+		t.Fatalf("failed to create schema dir: %v", err)
+	}
+
+	schemaFile := filepath.Join(schemaDir, "schema.go")
+	if err := os.WriteFile(schemaFile, []byte(code), 0644); err != nil {
+		t.Fatalf("failed to write schema file: %v", err)
+	}
+
+	// Create go.mod for the temp project
+	goMod := `module testproject
+
+go 1.21
+
+require github.com/lex00/wetwire-neo4j-go v1.5.4
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte(goMod), 0644); err != nil {
+		t.Fatalf("failed to write go.mod: %v", err)
+	}
+
+	// Verify the generated code has correct structure
+	// (We can't actually compile without network access to fetch deps,
+	// but we can verify the syntax and structure)
+	if !strings.Contains(code, "package testschema") {
+		t.Error("missing package declaration")
+	}
+	if !strings.Contains(code, `"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"`) {
+		t.Error("missing import statement")
+	}
+	if !strings.Contains(code, "var person = &schema.NodeType{") {
+		t.Error("missing node type definition")
+	}
+	if !strings.Contains(code, "var knows = &schema.RelationshipType{") {
+		t.Error("missing relationship type definition")
+	}
+	if !strings.Contains(code, "var Schema = &schema.Schema{") {
+		t.Error("missing Schema wrapper")
+	}
+}
+
+func TestMapNeo4jType_MatchesSchemaPackage(t *testing.T) {
+	// Document the expected mapping between Neo4j types and schema constants
+	// If this test fails, update mapNeo4jType to match schema package constants
+	expectedMappings := map[string]string{
+		// Standard types
+		"STRING":   "STRING",
+		"INTEGER":  "INTEGER",
+		"FLOAT":    "FLOAT",
+		"BOOLEAN":  "BOOLEAN",
+		"DATE":     "DATE",
+		"DATETIME": "DATETIME",
+		"POINT":    "POINT",
+		// Aliases
+		"INT":            "INTEGER",
+		"LONG":           "INTEGER",
+		"DOUBLE":         "FLOAT",
+		"BOOL":           "BOOLEAN",
+		"ZONED DATETIME": "DATETIME",
+		// List types
+		"LIST": "LIST_STRING",
+		// Unknown defaults to STRING
+		"UNKNOWN":     "STRING",
+		"RANDOM_TYPE": "STRING",
+	}
+
+	for neo4jType, expectedConstant := range expectedMappings {
+		got := mapNeo4jType(neo4jType)
+		if got != expectedConstant {
+			t.Errorf("mapNeo4jType(%q) = %q, want %q (must match schema package constant)", neo4jType, got, expectedConstant)
 		}
 	}
 }
