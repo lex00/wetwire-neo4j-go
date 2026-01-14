@@ -23,6 +23,7 @@ type kiroAgentJSON struct {
 type mcpServer struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
+	Cwd     string   `json:"cwd,omitempty"`
 }
 
 // Available MCP tools - must match what's registered in mcp.go
@@ -74,6 +75,7 @@ func InstallConfig(config corekiro.Config) error {
 
 	// Build agent config with correct field names
 	// Tools array uses @server_name format to include all tools from that MCP server
+	// Cwd is required so the MCP server runs in the project directory
 	agent := kiroAgentJSON{
 		Name:   config.AgentName,
 		Prompt: config.AgentPrompt,
@@ -81,6 +83,7 @@ func InstallConfig(config corekiro.Config) error {
 			"wetwire-neo4j": {
 				Command: mcpCommand,
 				Args:    config.MCPArgs,
+				Cwd:     config.WorkDir,
 			},
 		},
 		Tools: []string{"@wetwire-neo4j"},

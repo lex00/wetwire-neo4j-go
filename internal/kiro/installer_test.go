@@ -323,3 +323,55 @@ func TestInstallConfig_HasToolsArray(t *testing.T) {
 		t.Errorf("tools array must contain '@wetwire-neo4j', got: %v", tools)
 	}
 }
+
+func TestInstallConfig_SetsCwd(t *testing.T) {
+	// Test that cwd is set in MCP server config so it runs in the project directory
+	// Without this, wetwire_list scans the wrong directory and returns empty results
+	tmpHome := t.TempDir()
+	origHome := os.Getenv("HOME")
+	t.Setenv("HOME", tmpHome)
+	defer os.Setenv("HOME", origHome)
+
+	// Set a specific work directory
+	projectDir := filepath.Join(tmpHome, "my-project")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatalf("failed to create project dir: %v", err)
+	}
+
+	config := NewConfigWithContext("")
+	config.WorkDir = projectDir
+
+	if err := InstallConfig(config); err != nil {
+		t.Fatalf("InstallConfig failed: %v", err)
+	}
+
+	agentPath := filepath.Join(tmpHome, ".kiro", "agents", AgentName+".json")
+	data, err := os.ReadFile(agentPath)
+	if err != nil {
+		t.Fatalf("failed to read config: %v", err)
+	}
+
+	var agent map[string]any
+	if err := json.Unmarshal(data, &agent); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	mcpServers, ok := agent["mcpServers"].(map[string]any)
+	if !ok {
+		t.Fatal("mcpServers must be an object")
+	}
+
+	server, ok := mcpServers["wetwire-neo4j"].(map[string]any)
+	if !ok {
+		t.Fatal("mcpServers must contain 'wetwire-neo4j' object")
+	}
+
+	// Must have cwd set to the project directory
+	cwd, ok := server["cwd"].(string)
+	if !ok {
+		t.Fatal("MCP server config must have 'cwd' field")
+	}
+	if cwd != projectDir {
+		t.Errorf("expected cwd %q, got %q", projectDir, cwd)
+	}
+}
