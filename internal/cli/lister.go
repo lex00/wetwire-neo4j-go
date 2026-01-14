@@ -184,6 +184,12 @@ func (l *Lister) ListByKind(path string, kind discovery.ResourceKind, format str
 	}
 }
 
+// ScanDir returns all discovered resources in a directory.
+// This is useful for programmatic access to discovery results.
+func (l *Lister) ScanDir(path string) ([]discovery.DiscoveredResource, error) {
+	return l.scanner.ScanDir(path)
+}
+
 // ListDependencies shows the dependency graph for resources.
 func (l *Lister) ListDependencies(path string) error {
 	resources, err := l.scanner.ScanDir(path)
