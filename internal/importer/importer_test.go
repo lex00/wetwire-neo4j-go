@@ -114,6 +114,10 @@ func TestToCamelCase(t *testing.T) {
 		{"WORKS_FOR", "worksFor"},
 		{"MY_TEST_TYPE", "myTestType"},
 		{"simple", "simple"},
+		// Labels starting with numbers must be prefixed to be valid Go identifiers
+		{"5122Node", "n5122node"},
+		{"123", "n123"},
+		{"1_2_3", "n123"},
 	}
 
 	for _, tt := range tests {
@@ -449,6 +453,39 @@ require github.com/lex00/wetwire-neo4j-go v1.5.4
 	}
 	if !strings.Contains(code, "var Schema = &schema.Schema{") {
 		t.Error("missing Schema wrapper")
+	}
+}
+
+func TestImporter_NumericLabelGeneratesValidGo(t *testing.T) {
+	// Labels starting with numbers must generate valid Go identifiers
+	content := `CREATE CONSTRAINT FOR (n:5122Node) REQUIRE n.id IS UNIQUE;`
+
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "numeric.cypher")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	importer := NewCypherImporter(tmpFile)
+	result, err := importer.Import(context.Background())
+	if err != nil {
+		t.Fatalf("Import failed: %v", err)
+	}
+
+	g := NewGenerator("schema")
+	code, err := g.Generate(result)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Must NOT contain "var 5122" - that's invalid Go
+	if strings.Contains(code, "var 5122") {
+		t.Error("generated code contains 'var 5122' - invalid Go identifier")
+	}
+
+	// Must contain "var n5122" - the prefixed valid identifier
+	if !strings.Contains(code, "var n5122") {
+		t.Errorf("generated code should contain 'var n5122', got:\n%s", code)
 	}
 }
 
