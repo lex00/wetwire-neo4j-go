@@ -38,6 +38,8 @@ const (
 	KindPipeline ResourceKind = "Pipeline"
 	// KindRetriever represents a GraphRAG retriever configuration.
 	KindRetriever ResourceKind = "Retriever"
+	// KindSchema represents a Schema definition with AgentContext.
+	KindSchema ResourceKind = "Schema"
 )
 
 // PropertyInfo describes a property on a node or relationship type.
@@ -84,6 +86,8 @@ type DiscoveredResource struct {
 	Source string `json:"source,omitempty"`
 	// Target is the target node label for RelationshipType.
 	Target string `json:"target,omitempty"`
+	// AgentContext contains instructions for AI agents (from Schema.AgentContext).
+	AgentContext string `json:"agentContext,omitempty"`
 }
 
 // Scanner discovers resources in Go source files.
@@ -100,6 +104,7 @@ func NewScanner() *Scanner {
 		fset: token.NewFileSet(),
 		typeAliases: map[string]ResourceKind{
 			// Schema types
+			"Schema":           KindSchema,
 			"NodeType":         KindNodeType,
 			"RelationshipType": KindRelationshipType,
 			// Algorithm types (to be added)
@@ -268,6 +273,10 @@ func (s *Scanner) ScanFile(filename string) ([]DiscoveredResource, error) {
 				}
 				if kind == KindRelationshipType {
 					res.Source, res.Target = s.extractSourceTarget(compLit)
+				}
+				// Extract AgentContext for Schema
+				if kind == KindSchema {
+					res.AgentContext = s.extractAgentContext(compLit)
 				}
 
 				resources = append(resources, res)
@@ -685,6 +694,38 @@ func (s *Scanner) extractSourceTarget(lit *ast.CompositeLit) (source, target str
 	source = s.extractStringField(lit, "Source")
 	target = s.extractStringField(lit, "Target")
 	return
+}
+
+// extractAgentContext extracts the AgentContext field from a Schema composite literal.
+// Handles both regular strings ("...") and raw strings (`...`).
+func (s *Scanner) extractAgentContext(lit *ast.CompositeLit) string {
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		keyIdent, ok := kv.Key.(*ast.Ident)
+		if !ok || keyIdent.Name != "AgentContext" {
+			continue
+		}
+
+		basicLit, ok := kv.Value.(*ast.BasicLit)
+		if !ok || basicLit.Kind != token.STRING {
+			continue
+		}
+
+		value := basicLit.Value
+		// Handle regular strings "..."
+		if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
+			return value[1 : len(value)-1]
+		}
+		// Handle raw strings `...`
+		if len(value) >= 2 && value[0] == '`' && value[len(value)-1] == '`' {
+			return value[1 : len(value)-1]
+		}
+	}
+	return ""
 }
 
 // walkExprForDeps walks an expression tree looking for identifier references.

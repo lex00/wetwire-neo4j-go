@@ -139,3 +139,51 @@ func TestFormatSchemaContext_ToolReference(t *testing.T) {
 		t.Errorf("FormatSchemaContext() should reference wetwire_list tool\nGot:\n%s", got)
 	}
 }
+
+func TestFormatSchemaContext_AgentContext(t *testing.T) {
+	resources := []DiscoveredResource{
+		{
+			Name:         "MySchema",
+			Kind:         KindSchema,
+			File:         "schema.go",
+			Line:         1,
+			AgentContext: "Multi-tenant database - always filter by tenantId.\nIgnore nodes prefixed with _ (internal).",
+		},
+		{Name: "Person", Kind: KindNodeType, File: "schema.go", Line: 10},
+		{Name: "Company", Kind: KindNodeType, File: "schema.go", Line: 20},
+	}
+
+	got := FormatSchemaContext(resources)
+
+	// Should include Agent Instructions section
+	if !strings.Contains(got, "### Agent Instructions") {
+		t.Errorf("FormatSchemaContext() should include Agent Instructions section\nGot:\n%s", got)
+	}
+
+	// Should include the actual instructions
+	if !strings.Contains(got, "Multi-tenant database") {
+		t.Errorf("FormatSchemaContext() should include AgentContext content\nGot:\n%s", got)
+	}
+
+	if !strings.Contains(got, "tenantId") {
+		t.Errorf("FormatSchemaContext() should include tenantId instruction\nGot:\n%s", got)
+	}
+
+	// Should still include nodes
+	if !strings.Contains(got, "Person") {
+		t.Errorf("FormatSchemaContext() should still include nodes\nGot:\n%s", got)
+	}
+}
+
+func TestFormatSchemaContext_NoAgentContext(t *testing.T) {
+	resources := []DiscoveredResource{
+		{Name: "Person", Kind: KindNodeType, File: "schema.go", Line: 10},
+	}
+
+	got := FormatSchemaContext(resources)
+
+	// Should NOT include Agent Instructions section when no AgentContext
+	if strings.Contains(got, "Agent Instructions") {
+		t.Errorf("FormatSchemaContext() should not include Agent Instructions when empty\nGot:\n%s", got)
+	}
+}

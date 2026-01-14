@@ -19,9 +19,15 @@ func FormatSchemaContext(resources []DiscoveredResource) string {
 	algorithms := make([]DiscoveredResource, 0)
 	pipelines := make([]DiscoveredResource, 0)
 	retrievers := make([]DiscoveredResource, 0)
+	var agentContext string
 
 	for _, r := range resources {
 		switch r.Kind {
+		case KindSchema:
+			// Extract AgentContext from Schema
+			if r.AgentContext != "" {
+				agentContext = r.AgentContext
+			}
 		case KindNodeType:
 			nodes = append(nodes, r)
 		case KindRelationshipType:
@@ -37,6 +43,15 @@ func FormatSchemaContext(resources []DiscoveredResource) string {
 
 	var sb strings.Builder
 	sb.WriteString("## Existing Schema\n\n")
+
+	// Write AgentContext instructions first (most important for agent behavior)
+	if agentContext != "" {
+		sb.WriteString("### Agent Instructions\n")
+		sb.WriteString("IMPORTANT: Follow these instructions when working with this schema:\n\n")
+		sb.WriteString(agentContext)
+		sb.WriteString("\n\n")
+	}
+
 	sb.WriteString("The following resources already exist in this project. Use wetwire_list or read the source files for full property details.\n\n")
 
 	// Write nodes section

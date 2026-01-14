@@ -1333,3 +1333,92 @@ var WorksFor = &schema.RelationshipType{
 		}
 	}
 }
+
+func TestScanner_ExtractsAgentContext(t *testing.T) {
+	content := `package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+var Person = &schema.NodeType{
+	Label: "Person",
+}
+
+var Schema = &schema.Schema{
+	Name: "myschema",
+	Nodes: []*schema.NodeType{Person},
+	AgentContext: ` + "`" + `Multi-tenant database - always filter by tenantId.
+Ignore nodes prefixed with _ (internal).` + "`" + `,
+}
+`
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "schema.go")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	s := NewScanner()
+	resources, err := s.ScanFile(tmpFile)
+	if err != nil {
+		t.Fatalf("ScanFile failed: %v", err)
+	}
+
+	// Should find Person NodeType and Schema
+	var schemaRes *DiscoveredResource
+	for i := range resources {
+		if resources[i].Kind == KindSchema {
+			schemaRes = &resources[i]
+			break
+		}
+	}
+
+	if schemaRes == nil {
+		t.Fatal("did not find Schema resource")
+	}
+
+	if schemaRes.AgentContext == "" {
+		t.Error("AgentContext should not be empty")
+	}
+
+	if schemaRes.AgentContext != "Multi-tenant database - always filter by tenantId.\nIgnore nodes prefixed with _ (internal)." {
+		t.Errorf("unexpected AgentContext: %q", schemaRes.AgentContext)
+	}
+}
+
+func TestScanner_ExtractsAgentContext_RegularString(t *testing.T) {
+	content := `package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+var Schema = &schema.Schema{
+	Name: "myschema",
+	AgentContext: "Simple instructions for the agent.",
+}
+`
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "schema.go")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	s := NewScanner()
+	resources, err := s.ScanFile(tmpFile)
+	if err != nil {
+		t.Fatalf("ScanFile failed: %v", err)
+	}
+
+	var schemaRes *DiscoveredResource
+	for i := range resources {
+		if resources[i].Kind == KindSchema {
+			schemaRes = &resources[i]
+			break
+		}
+	}
+
+	if schemaRes == nil {
+		t.Fatal("did not find Schema resource")
+	}
+
+	if schemaRes.AgentContext != "Simple instructions for the agent." {
+		t.Errorf("unexpected AgentContext: %q", schemaRes.AgentContext)
+	}
+}
