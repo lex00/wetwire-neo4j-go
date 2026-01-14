@@ -92,30 +92,50 @@ func (g *Generator) Generate(result *ImportResult) (string, error) {
 	sb.WriteString("\t\"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema\"\n")
 	sb.WriteString(")\n\n")
 
+	// Track used variable names to avoid redeclarations
+	usedNames := make(map[string]bool)
+
 	// Collect variable names for the Schema
 	var nodeVarNames []string
 	var relVarNames []string
 
 	// Generate node types
 	for _, node := range result.NodeTypes {
-		code := g.generateNodeType(node)
+		varName := g.uniqueVarName(toCamelCase(node.Label), "", usedNames)
+		code := g.generateNodeTypeWithName(node, varName)
 		sb.WriteString(code)
 		sb.WriteString("\n")
-		nodeVarNames = append(nodeVarNames, toCamelCase(node.Label))
+		nodeVarNames = append(nodeVarNames, varName)
 	}
 
 	// Generate relationship types
 	for _, rel := range result.RelationshipTypes {
-		code := g.generateRelationshipType(rel)
+		varName := g.uniqueVarName(toCamelCase(rel.Type), "Rel", usedNames)
+		code := g.generateRelationshipTypeWithName(rel, varName)
 		sb.WriteString(code)
 		sb.WriteString("\n")
-		relVarNames = append(relVarNames, toCamelCase(rel.Type))
+		relVarNames = append(relVarNames, varName)
 	}
 
 	// Generate Schema wrapper
 	sb.WriteString(g.generateSchema(nodeVarNames, relVarNames))
 
 	return sb.String(), nil
+}
+
+// uniqueVarName returns a unique variable name, adding suffix if needed to avoid collisions.
+func (g *Generator) uniqueVarName(baseName, suffix string, usedNames map[string]bool) string {
+	name := baseName
+	if usedNames[name] {
+		// Collision - add suffix
+		name = baseName + suffix
+	}
+	// If still colliding (unlikely), add numbers
+	for i := 2; usedNames[name]; i++ {
+		name = fmt.Sprintf("%s%s%d", baseName, suffix, i)
+	}
+	usedNames[name] = true
+	return name
 }
 
 func (g *Generator) generateSchema(nodeVarNames, relVarNames []string) string {
@@ -155,11 +175,10 @@ func (g *Generator) generateSchema(nodeVarNames, relVarNames []string) string {
 	return sb.String()
 }
 
-func (g *Generator) generateNodeType(node NodeTypeDefinition) string {
+func (g *Generator) generateNodeTypeWithName(node NodeTypeDefinition, varName string) string {
 	var sb strings.Builder
 
 	// Variable declaration
-	varName := toCamelCase(node.Label)
 	sb.WriteString(fmt.Sprintf("// %s represents the %s node type.\n", varName, node.Label))
 	sb.WriteString(fmt.Sprintf("var %s = &schema.NodeType{\n", varName))
 	sb.WriteString(fmt.Sprintf("\tLabel: %q,\n", node.Label))
@@ -208,11 +227,10 @@ func (g *Generator) generateNodeType(node NodeTypeDefinition) string {
 	return sb.String()
 }
 
-func (g *Generator) generateRelationshipType(rel RelationshipTypeDefinition) string {
+func (g *Generator) generateRelationshipTypeWithName(rel RelationshipTypeDefinition, varName string) string {
 	var sb strings.Builder
 
 	// Variable declaration
-	varName := toCamelCase(rel.Type)
 	sb.WriteString(fmt.Sprintf("// %s represents the %s relationship type.\n", varName, rel.Type))
 	sb.WriteString(fmt.Sprintf("var %s = &schema.RelationshipType{\n", varName))
 	sb.WriteString(fmt.Sprintf("\tLabel: %q,\n", rel.Type))

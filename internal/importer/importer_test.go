@@ -587,3 +587,63 @@ func TestGenerator_MultipleConstraintsAndIndexes(t *testing.T) {
 		t.Error("missing FULLTEXT index")
 	}
 }
+
+func TestGenerator_NameCollisionHandling(t *testing.T) {
+	// Test that nodes and relationships with the same name don't cause redeclarations
+	g := NewGenerator("schema")
+
+	result := &ImportResult{
+		NodeTypes: []NodeTypeDefinition{
+			{Label: "WORKS_FOR"},  // becomes worksFor
+			{Label: "Person"},     // becomes person
+		},
+		RelationshipTypes: []RelationshipTypeDefinition{
+			{Type: "WORKS_FOR"},   // would be worksFor, should become worksForRel
+			{Type: "PERSON"},      // would be person, should become personRel
+		},
+	}
+
+	code, err := g.Generate(result)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Check that we have 4 distinct variable declarations
+	varDeclCount := strings.Count(code, "var ")
+	// Should be 4 resources + 1 Schema = 5 var declarations
+	if varDeclCount != 5 {
+		t.Errorf("expected 5 var declarations, got %d", varDeclCount)
+	}
+
+	// Check that the node types are declared as NodeType
+	if !strings.Contains(code, "var worksFor = &schema.NodeType{") {
+		t.Error("missing worksFor NodeType declaration")
+	}
+	if !strings.Contains(code, "var person = &schema.NodeType{") {
+		t.Error("missing person NodeType declaration")
+	}
+
+	// Check that the relationship types are declared as RelationshipType with suffix
+	if !strings.Contains(code, "var worksForRel = &schema.RelationshipType{") {
+		t.Error("missing worksForRel RelationshipType declaration")
+	}
+	if !strings.Contains(code, "var personRel = &schema.RelationshipType{") {
+		t.Error("missing personRel RelationshipType declaration")
+	}
+
+	// Check that Schema uses correct variable names in correct arrays
+	if !strings.Contains(code, "Nodes: []*schema.NodeType{\n\t\tworksFor,\n\t\tperson,") {
+		t.Error("Schema.Nodes should contain worksFor and person")
+	}
+	if !strings.Contains(code, "Relationships: []*schema.RelationshipType{\n\t\tworksForRel,\n\t\tpersonRel,") {
+		t.Error("Schema.Relationships should contain worksForRel and personRel")
+	}
+
+	// Verify the actual Neo4j labels/types are preserved correctly
+	if !strings.Contains(code, `Label: "WORKS_FOR"`) {
+		t.Error("WORKS_FOR label should be preserved in both node and relationship")
+	}
+	if !strings.Contains(code, `Label: "PERSON"`) {
+		t.Error("PERSON label should be preserved in relationship")
+	}
+}
