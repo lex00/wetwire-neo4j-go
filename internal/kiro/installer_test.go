@@ -375,3 +375,70 @@ func TestInstallConfig_SetsCwd(t *testing.T) {
 		t.Errorf("expected cwd %q, got %q", projectDir, cwd)
 	}
 }
+
+func TestInstallConfig_WritesProjectMCPConfig(t *testing.T) {
+	// Test that InstallConfig writes .kiro/mcp.json to the project directory
+	// Kiro reads MCP server config from the project directory, not from agent config
+	tmpHome := t.TempDir()
+	// Resolve symlinks (macOS /var -> /private/var)
+	tmpHome, _ = filepath.EvalSymlinks(tmpHome)
+
+	projectDir := filepath.Join(tmpHome, "my-project")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatalf("failed to create project dir: %v", err)
+	}
+
+	t.Setenv("HOME", tmpHome)
+
+	config := NewConfigWithContext("")
+	config.WorkDir = projectDir
+
+	if err := InstallConfig(config); err != nil {
+		t.Fatalf("InstallConfig failed: %v", err)
+	}
+
+	// Check that .kiro/mcp.json was created in the project directory
+	mcpPath := filepath.Join(projectDir, ".kiro", "mcp.json")
+	data, err := os.ReadFile(mcpPath)
+	if err != nil {
+		t.Fatalf("failed to read project mcp.json: %v", err)
+	}
+
+	var mcpConfig map[string]any
+	if err := json.Unmarshal(data, &mcpConfig); err != nil {
+		t.Fatalf("invalid JSON in mcp.json: %v", err)
+	}
+
+	// Must have mcpServers
+	mcpServers, ok := mcpConfig["mcpServers"].(map[string]any)
+	if !ok {
+		t.Fatal("mcp.json must have 'mcpServers' object")
+	}
+
+	// Must have wetwire-neo4j server
+	server, ok := mcpServers["wetwire-neo4j"].(map[string]any)
+	if !ok {
+		t.Fatal("mcpServers must contain 'wetwire-neo4j' object")
+	}
+
+	// Must have command
+	if _, ok := server["command"].(string); !ok {
+		t.Error("MCP server must have 'command' field")
+	}
+
+	// Must have args with "mcp"
+	args, ok := server["args"].([]any)
+	if !ok {
+		t.Fatal("MCP server must have 'args' array")
+	}
+	hasMCP := false
+	for _, arg := range args {
+		if arg == "mcp" {
+			hasMCP = true
+			break
+		}
+	}
+	if !hasMCP {
+		t.Errorf("MCP server args must contain 'mcp', got: %v", args)
+	}
+}

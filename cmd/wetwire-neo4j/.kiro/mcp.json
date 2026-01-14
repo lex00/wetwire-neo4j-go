@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "wetwire-neo4j": {
-      "command": "uvx",
+      "command": "/Users/alex/go/bin/wetwire-neo4j",
       "args": [
-        "wetwire-neo4j",
         "mcp"
       ]
     }
