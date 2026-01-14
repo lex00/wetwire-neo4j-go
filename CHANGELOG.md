@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.11] - 2026-01-13
+
+### Added
+
+- Discovery scanner extracts `AgentContext` from Schema definitions
+  - AI agents now see schema-defined instructions in their prompts
+  - Supports both regular strings and raw strings (backticks)
+  - Displayed prominently as "Agent Instructions" section
+
 ## [1.5.10] - 2026-01-13
 
 ### Fixed
