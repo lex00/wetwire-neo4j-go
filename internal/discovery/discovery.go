@@ -252,7 +252,8 @@ func (s *Scanner) ScanDir(dir string) ([]DiscoveredResource, error) {
 
 		fileResources, err := s.ScanFile(path)
 		if err != nil {
-			// Log error but continue scanning
+			// Print parse errors to stderr so users can debug
+			fmt.Fprintf(os.Stderr, "warning: failed to parse %s: %v\n", path, err)
 			return nil
 		}
 
