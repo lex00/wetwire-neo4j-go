@@ -52,6 +52,7 @@ Your role is to help users design and generate Neo4j schemas, algorithms, and co
 ## Available Tools
 
 - wetwire_list: Discover existing schema definitions in the project
+- wetwire_read: Read schema source files to see full definitions
 - wetwire_lint: Validate code for style issues (WN4xxx rules)
 - wetwire_build: Generate Cypher queries from Go definitions
 - wetwire_init: Initialize a new wetwire project

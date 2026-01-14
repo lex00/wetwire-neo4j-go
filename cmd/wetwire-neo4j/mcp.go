@@ -35,6 +35,7 @@ func runMCPServer() error {
 	server.RegisterToolWithSchema("wetwire_validate", "Validate configurations against a live Neo4j instance", handleMCPValidate, validateSchema)
 	server.RegisterToolWithSchema("wetwire_list", "List discovered Neo4j definitions", handleMCPList, listSchema)
 	server.RegisterToolWithSchema("wetwire_graph", "Visualize resource dependencies (DOT/Mermaid)", handleMCPGraph, graphSchema)
+	server.RegisterToolWithSchema("wetwire_read", "Read a schema or source file", handleMCPRead, readSchema)
 
 	// Run on stdio transport
 	return server.Start(context.Background())
@@ -127,6 +128,17 @@ var graphSchema = map[string]any{
 			"description": "Output format (default: mermaid)",
 		},
 	},
+}
+
+var readSchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"path": map[string]any{
+			"type":        "string",
+			"description": "Path to the file to read (relative to working directory)",
+		},
+	},
+	"required": []string{"path"},
 }
 
 // handleMCPInit initializes a new wetwire-neo4j project.
@@ -356,6 +368,45 @@ func handleMCPGraph(_ context.Context, args map[string]any) (string, error) {
 	return toMCPJSON(result)
 }
 
+// handleMCPRead reads a file and returns its contents.
+func handleMCPRead(_ context.Context, args map[string]any) (string, error) {
+	path, _ := args["path"].(string)
+
+	result := MCPReadResult{}
+
+	if path == "" {
+		result.Error = "path is required"
+		return toMCPJSON(result)
+	}
+
+	// Security: only allow reading .go files and common config files
+	// to prevent reading sensitive files
+	allowed := false
+	allowedExtensions := []string{".go", ".mod", ".sum", ".cypher", ".cql", ".json", ".yaml", ".yml", ".md", ".txt"}
+	for _, ext := range allowedExtensions {
+		if filepath.Ext(path) == ext || filepath.Base(path) == "go.mod" || filepath.Base(path) == "go.sum" {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		result.Error = fmt.Sprintf("reading %s is not allowed (only .go, .mod, .cypher, .json, .yaml, .md files)", filepath.Ext(path))
+		return toMCPJSON(result)
+	}
+
+	// Read the file
+	content, err := os.ReadFile(path)
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to read file: %v", err)
+		return toMCPJSON(result)
+	}
+
+	result.Success = true
+	result.Path = path
+	result.Content = string(content)
+	return toMCPJSON(result)
+}
+
 // MCP Result types
 
 // MCPInitResult is the result of the wetwire_init tool.
@@ -420,6 +471,14 @@ type MCPResourceInfo struct {
 type MCPGraphResult struct {
 	Success bool   `json:"success"`
 	Graph   string `json:"graph,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
+// MCPReadResult is the result of the wetwire_read tool.
+type MCPReadResult struct {
+	Success bool   `json:"success"`
+	Path    string `json:"path,omitempty"`
+	Content string `json:"content,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
 
