@@ -56,6 +56,10 @@ func (i *Initializer) Init(ctx context.Context, path string, opts cmd.InitOption
 		template = "default"
 	}
 
+	if err := i.generateGoMod(path, projectName); err != nil {
+		return err
+	}
+
 	if err := i.generateMainGo(path, projectName); err != nil {
 		return err
 	}
@@ -106,6 +110,16 @@ func (i *Initializer) Init(ctx context.Context, path string, opts cmd.InitOption
 	}
 
 	return nil
+}
+
+func (i *Initializer) generateGoMod(path, projectName string) error {
+	content := fmt.Sprintf(`module %s
+
+go 1.21
+
+require github.com/lex00/wetwire-neo4j-go v1.5.5
+`, projectName)
+	return os.WriteFile(filepath.Join(path, "go.mod"), []byte(content), 0644)
 }
 
 func (i *Initializer) generateMainGo(path, projectName string) error {

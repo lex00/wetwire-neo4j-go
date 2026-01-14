@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/lex00/wetwire-core-go/cmd"
+	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 )
 
 func TestInitializer_Interface(t *testing.T) {
@@ -39,6 +40,12 @@ func TestInitializer_Init(t *testing.T) {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Errorf("expected directory %s to exist", path)
 		}
+	}
+
+	// Verify go.mod exists
+	goModPath := filepath.Join(projectPath, "go.mod")
+	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
+		t.Error("expected go.mod to exist")
 	}
 
 	// Verify main.go exists
@@ -138,5 +145,47 @@ func TestInitializer_InvalidPath(t *testing.T) {
 	err := init.Init(context.Background(), "", cmd.InitOptions{})
 	if err == nil {
 		t.Error("expected error for empty path")
+	}
+}
+
+func TestInitializer_E2E_InitThenList(t *testing.T) {
+	// End-to-end test: init project → list finds resources
+	tmpDir := t.TempDir()
+	projectPath := filepath.Join(tmpDir, "e2e-test")
+
+	init := NewInitializer()
+	err := init.Init(context.Background(), projectPath, cmd.InitOptions{})
+	if err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+
+	// Verify go.mod exists (required for proper Go project)
+	goModPath := filepath.Join(projectPath, "go.mod")
+	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
+		t.Fatal("go.mod not created - list will fail")
+	}
+
+	// Now list should find resources
+	scanner := discovery.NewScanner()
+	resources, err := scanner.ScanDir(projectPath)
+	if err != nil {
+		t.Fatalf("ScanDir failed: %v", err)
+	}
+
+	// Should find at least Person, Company, WorksFor from default template
+	if len(resources) < 3 {
+		t.Errorf("expected at least 3 resources, got %d", len(resources))
+	}
+
+	// Verify we found Person
+	foundPerson := false
+	for _, r := range resources {
+		if r.Name == "Person" {
+			foundPerson = true
+			break
+		}
+	}
+	if !foundPerson {
+		t.Error("list did not find Person node type after init")
 	}
 }
