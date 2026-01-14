@@ -211,8 +211,15 @@ func (s *Scanner) ScanFile(filename string) ([]DiscoveredResource, error) {
 				pos := s.fset.Position(name.Pos())
 				deps := s.extractCompositeLitDependencies(compLit)
 
+				// Extract Label field value for the resource name (actual Neo4j label)
+				// Falls back to variable name if Label not found
+				resourceName := s.extractLabelField(compLit)
+				if resourceName == "" {
+					resourceName = name.Name
+				}
+
 				resources = append(resources, DiscoveredResource{
-					Name:         name.Name,
+					Name:         resourceName,
 					Kind:         kind,
 					File:         filename,
 					Line:         pos.Line,
@@ -390,6 +397,36 @@ func (s *Scanner) extractCompositeLitDependencies(lit *ast.CompositeLit) []strin
 	}
 
 	return deps
+}
+
+// extractLabelField extracts the Label field value from a composite literal.
+// Returns empty string if Label field not found.
+func (s *Scanner) extractLabelField(lit *ast.CompositeLit) string {
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		// Check if key is "Label"
+		keyIdent, ok := kv.Key.(*ast.Ident)
+		if !ok || keyIdent.Name != "Label" {
+			continue
+		}
+
+		// Extract string value
+		basicLit, ok := kv.Value.(*ast.BasicLit)
+		if !ok || basicLit.Kind != token.STRING {
+			continue
+		}
+
+		// Remove quotes from string literal
+		value := basicLit.Value
+		if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
+			return value[1 : len(value)-1]
+		}
+	}
+	return ""
 }
 
 // walkExprForDeps walks an expression tree looking for identifier references.
