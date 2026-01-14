@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.10] - 2026-01-13
+
+### Fixed
+
+- Importer prevents variable name collisions between nodes and relationships
+  - Adds "Rel" suffix to relationship variables when names would collide
+  - Fixes redeclaration and type mismatch errors
+  - Neo4j labels preserved correctly, only Go variable names disambiguated
+
 ## [1.5.9] - 2026-01-13
 
 ### Added
