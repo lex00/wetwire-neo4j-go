@@ -16,6 +16,7 @@ type kiroAgentJSON struct {
 	Name         string               `json:"name"`
 	Prompt       string               `json:"prompt"`
 	MCPServers   map[string]mcpServer `json:"mcpServers,omitempty"`
+	Tools        []string             `json:"tools,omitempty"`
 	AllowedTools []string             `json:"allowedTools,omitempty"`
 }
 
@@ -25,14 +26,13 @@ type mcpServer struct {
 }
 
 // Available MCP tools - must match what's registered in mcp.go
-// Format: "server_name:tool_name" as kiro expects
 var mcpTools = []string{
-	"wetwire-neo4j:wetwire_init",
-	"wetwire-neo4j:wetwire_build",
-	"wetwire-neo4j:wetwire_lint",
-	"wetwire-neo4j:wetwire_validate",
-	"wetwire-neo4j:wetwire_list",
-	"wetwire-neo4j:wetwire_graph",
+	"wetwire_init",
+	"wetwire_build",
+	"wetwire_lint",
+	"wetwire_validate",
+	"wetwire_list",
+	"wetwire_graph",
 }
 
 // EnsureInstalled installs the Kiro agent configuration if not already present.
@@ -73,6 +73,7 @@ func InstallConfig(config corekiro.Config) error {
 	}
 
 	// Build agent config with correct field names
+	// Tools array uses @server_name format to include all tools from that MCP server
 	agent := kiroAgentJSON{
 		Name:   config.AgentName,
 		Prompt: config.AgentPrompt,
@@ -82,7 +83,7 @@ func InstallConfig(config corekiro.Config) error {
 				Args:    config.MCPArgs,
 			},
 		},
-		AllowedTools: mcpTools,
+		Tools: []string{"@wetwire-neo4j"},
 	}
 
 	// Write agent config

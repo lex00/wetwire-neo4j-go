@@ -5,8 +5,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/lex00/wetwire-core-go v1.5.0 h1:YQQIbuSwv1rw3ztliKV4Lc+D8xdT3JWvLUldRG9Ha9o=
-github.com/lex00/wetwire-core-go v1.5.0/go.mod h1:YQZAyTn0YyXFzgrHSogr7S3bZnt45xuEWjEV3TJKf3A=
+github.com/lex00/wetwire-core-go v1.5.2 h1:CMlb0SIsIxAr5rM0Tt1c6e3+N+pN8HSXAoMpVnkx4ds=
+github.com/lex00/wetwire-core-go v1.5.2/go.mod h1:YQZAyTn0YyXFzgrHSogr7S3bZnt45xuEWjEV3TJKf3A=
 github.com/neo4j/neo4j-go-driver/v5 v5.28.4 h1:7toxehVcYkZbyxV4W3Ib9VcnyRBQPucF+VwNNmtSXi4=
 github.com/neo4j/neo4j-go-driver/v5 v5.28.4/go.mod h1:Vff8OwT7QpLm7L2yYr85XNWe9Rbqlbeb9asNXJTHO4k=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
