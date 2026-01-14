@@ -232,11 +232,12 @@ var company = &NodeType{
 		}
 	}
 
-	if !names["person"] {
-		t.Error("expected to find 'person' variable")
+	// Should find Label values, not variable names
+	if !names["Person"] {
+		t.Error("expected to find 'Person' (Label value), not 'person' (variable name)")
 	}
-	if !names["company"] {
-		t.Error("expected to find 'company' variable")
+	if !names["Company"] {
+		t.Error("expected to find 'Company' (Label value), not 'company' (variable name)")
 	}
 }
 
@@ -1153,5 +1154,61 @@ var person = schema.NodeType{
 
 	if resources[0].Kind != KindNodeType {
 		t.Errorf("expected NodeType kind, got %v", resources[0].Kind)
+	}
+}
+
+func TestScanner_ReturnsNeo4jLabelsNotVariableNames(t *testing.T) {
+	content := `package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+var myVar = &schema.NodeType{
+	Label: "ActualLabel",
+}
+
+var worksFor = &schema.RelationshipType{
+	Label: "WORKS_FOR",
+}
+`
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "labels.go")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	s := NewScanner()
+	resources, err := s.ScanFile(tmpFile)
+	if err != nil {
+		t.Fatalf("ScanFile failed: %v", err)
+	}
+
+	if len(resources) != 2 {
+		t.Fatalf("expected 2 resources, got %d", len(resources))
+	}
+
+	// Must find "ActualLabel", not "myVar"
+	foundActualLabel := false
+	foundWorksFor := false
+	for _, r := range resources {
+		if r.Name == "ActualLabel" {
+			foundActualLabel = true
+		}
+		if r.Name == "WORKS_FOR" {
+			foundWorksFor = true
+		}
+		// Should NOT find variable names
+		if r.Name == "myVar" {
+			t.Error("found 'myVar' (Go variable name) instead of 'ActualLabel' (Neo4j label)")
+		}
+		if r.Name == "worksFor" {
+			t.Error("found 'worksFor' (Go variable name) instead of 'WORKS_FOR' (Neo4j label)")
+		}
+	}
+
+	if !foundActualLabel {
+		t.Error("did not find 'ActualLabel' - scanner should return Neo4j label, not Go variable name")
+	}
+	if !foundWorksFor {
+		t.Error("did not find 'WORKS_FOR' - scanner should return Neo4j label, not Go variable name")
 	}
 }
