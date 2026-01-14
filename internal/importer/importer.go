@@ -251,6 +251,12 @@ func toCamelCase(s string) string {
 			result += strings.ToUpper(words[i][:1]) + strings.ToLower(words[i][1:])
 		}
 	}
+
+	// Go identifiers can't start with a digit - prefix with 'n'
+	if len(result) > 0 && result[0] >= '0' && result[0] <= '9' {
+		result = "n" + result
+	}
+
 	return result
 }
 
