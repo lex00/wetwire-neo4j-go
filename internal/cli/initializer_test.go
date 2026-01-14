@@ -189,3 +189,85 @@ func TestInitializer_E2E_InitThenList(t *testing.T) {
 		t.Error("list did not find Person node type after init")
 	}
 }
+
+func TestE2E_InitImportList(t *testing.T) {
+	// Full e2e test: init → import → list
+	tmpDir := t.TempDir()
+	projectPath := filepath.Join(tmpDir, "full-e2e")
+
+	// Step 1: Init project
+	init := NewInitializer()
+	if err := init.Init(context.Background(), projectPath, cmd.InitOptions{}); err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+
+	// Verify go.mod exists
+	if _, err := os.Stat(filepath.Join(projectPath, "go.mod")); os.IsNotExist(err) {
+		t.Fatal("go.mod not created")
+	}
+
+	// Step 2: Create cypher file and import additional schema
+	cypherContent := `CREATE CONSTRAINT order_id FOR (o:Order) REQUIRE o.id IS UNIQUE;
+CREATE CONSTRAINT product_sku FOR (p:Product) REQUIRE p.sku IS UNIQUE;`
+	cypherFile := filepath.Join(projectPath, "additional.cypher")
+	if err := os.WriteFile(cypherFile, []byte(cypherContent), 0644); err != nil {
+		t.Fatalf("failed to write cypher file: %v", err)
+	}
+
+	// Import to a new schema file
+	importer := NewImporterCLI()
+	outputFile := filepath.Join(projectPath, "schema", "orders.go")
+	if err := importer.ImportToFile(cypherFile, "", "", "", "", "schema", outputFile); err != nil {
+		t.Fatalf("Import failed: %v", err)
+	}
+
+	// Verify the imported file exists and has .go extension
+	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
+		t.Fatalf("imported file not created at %s", outputFile)
+	}
+
+	// Step 3: List should find resources from both init and import
+	scanner := discovery.NewScanner()
+	resources, err := scanner.ScanDir(projectPath)
+	if err != nil {
+		t.Fatalf("ScanDir failed: %v", err)
+	}
+
+	// Should find: Person, Company, WorksFor (from init) + order, product (from import)
+	if len(resources) < 5 {
+		t.Errorf("expected at least 5 resources, got %d", len(resources))
+	}
+
+	// Verify we found resources from init
+	foundPerson := false
+	foundCompany := false
+	// Verify we found resources from import
+	foundOrder := false
+	foundProduct := false
+
+	for _, r := range resources {
+		switch r.Name {
+		case "Person":
+			foundPerson = true
+		case "Company":
+			foundCompany = true
+		case "order":
+			foundOrder = true
+		case "product":
+			foundProduct = true
+		}
+	}
+
+	if !foundPerson {
+		t.Error("list did not find Person (from init)")
+	}
+	if !foundCompany {
+		t.Error("list did not find Company (from init)")
+	}
+	if !foundOrder {
+		t.Error("list did not find order (from import)")
+	}
+	if !foundProduct {
+		t.Error("list did not find product (from import)")
+	}
+}
