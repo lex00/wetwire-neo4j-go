@@ -156,11 +156,13 @@ func TestMapIndexType(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"RANGE", "RangeIndex"},
-		{"FULLTEXT", "FullTextIndex"},
-		{"VECTOR", "VectorIndex"},
-		{"TEXT", "TextIndex"},
-		{"unknown", "RangeIndex"},
+		{"RANGE", "BTREE"},
+		{"BTREE", "BTREE"},
+		{"FULLTEXT", "FULLTEXT"},
+		{"VECTOR", "VECTOR"},
+		{"TEXT", "TEXT"},
+		{"POINT", "POINT_INDEX"},
+		{"unknown", "BTREE"},
 	}
 
 	for _, tt := range tests {

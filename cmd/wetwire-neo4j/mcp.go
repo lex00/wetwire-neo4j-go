@@ -312,9 +312,14 @@ func handleMCPList(_ context.Context, args map[string]any) (string, error) {
 
 	for _, res := range resources {
 		result.Resources = append(result.Resources, MCPResourceInfo{
-			Name: res.Name,
-			Kind: string(res.Kind),
-			File: res.File,
+			Name:        res.Name,
+			Kind:        string(res.Kind),
+			File:        res.File,
+			Properties:  res.Properties,
+			Constraints: res.Constraints,
+			Indexes:     res.Indexes,
+			Source:      res.Source,
+			Target:      res.Target,
 		})
 	}
 
@@ -401,9 +406,14 @@ type MCPListResult struct {
 
 // MCPResourceInfo describes a discovered resource.
 type MCPResourceInfo struct {
-	Name string `json:"name"`
-	Kind string `json:"kind"`
-	File string `json:"file"`
+	Name        string                    `json:"name"`
+	Kind        string                    `json:"kind"`
+	File        string                    `json:"file"`
+	Properties  []discovery.PropertyInfo  `json:"properties,omitempty"`
+	Constraints []discovery.ConstraintInfo `json:"constraints,omitempty"`
+	Indexes     []discovery.IndexInfo     `json:"indexes,omitempty"`
+	Source      string                    `json:"source,omitempty"`
+	Target      string                    `json:"target,omitempty"`
 }
 
 // MCPGraphResult is the result of the wetwire_graph tool.

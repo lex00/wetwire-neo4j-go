@@ -182,11 +182,11 @@ func (g *Generator) generateNodeType(node NodeTypeDefinition) string {
 		switch c.Type {
 		case "UNIQUENESS":
 			sb.WriteString("\tConstraints: []schema.Constraint{\n")
-			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.Unique, Properties: %s},\n", formatStringSlice(c.Properties)))
+			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.UNIQUE, Properties: %s},\n", formatStringSlice(c.Properties)))
 			sb.WriteString("\t},\n")
 		case "NODE_KEY":
 			sb.WriteString("\tConstraints: []schema.Constraint{\n")
-			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.NodeKey, Properties: %s},\n", formatStringSlice(c.Properties)))
+			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.NODE_KEY, Properties: %s},\n", formatStringSlice(c.Properties)))
 			sb.WriteString("\t},\n")
 		}
 	}
@@ -285,16 +285,18 @@ func mapNeo4jType(t string) string {
 
 func mapIndexType(t string) string {
 	switch strings.ToUpper(t) {
-	case "RANGE":
-		return "RangeIndex"
+	case "RANGE", "BTREE":
+		return "BTREE"
 	case "FULLTEXT":
-		return "FullTextIndex"
+		return "FULLTEXT"
 	case "VECTOR":
-		return "VectorIndex"
+		return "VECTOR"
 	case "TEXT":
-		return "TextIndex"
+		return "TEXT"
+	case "POINT":
+		return "POINT_INDEX"
 	default:
-		return "RangeIndex"
+		return "BTREE"
 	}
 }
 
