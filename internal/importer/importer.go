@@ -257,23 +257,23 @@ func toCamelCase(s string) string {
 func mapNeo4jType(t string) string {
 	switch strings.ToUpper(t) {
 	case "STRING":
-		return "TypeString"
+		return "STRING"
 	case "INTEGER", "INT", "LONG":
-		return "TypeInteger"
+		return "INTEGER"
 	case "FLOAT", "DOUBLE":
-		return "TypeFloat"
+		return "FLOAT"
 	case "BOOLEAN", "BOOL":
-		return "TypeBoolean"
+		return "BOOLEAN"
 	case "DATE":
-		return "TypeDate"
+		return "DATE"
 	case "DATETIME", "ZONED DATETIME":
-		return "TypeDateTime"
+		return "DATETIME"
 	case "POINT":
-		return "TypePoint"
+		return "POINT"
 	case "LIST":
-		return "TypeListString" // Default to string list
+		return "LIST_STRING" // Default to string list
 	default:
-		return "TypeString"
+		return "STRING"
 	}
 }
 
