@@ -16,7 +16,7 @@ func TestMCPServer_ToolsList(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("failed to build binary: %v", err)
 	}
-	defer exec.Command("rm", "wetwire-neo4j-test").Run()
+	defer func() { _ = exec.Command("rm", "wetwire-neo4j-test").Run() }()
 
 	// Start MCP server
 	mcpCmd := exec.Command("./wetwire-neo4j-test", "mcp")
@@ -32,7 +32,7 @@ func TestMCPServer_ToolsList(t *testing.T) {
 	if err := mcpCmd.Start(); err != nil {
 		t.Fatalf("failed to start MCP server: %v", err)
 	}
-	defer mcpCmd.Process.Kill()
+	defer func() { _ = mcpCmd.Process.Kill() }()
 
 	// Send tools/list request
 	request := `{"jsonrpc":"2.0","method":"tools/list","id":1}` + "\n"

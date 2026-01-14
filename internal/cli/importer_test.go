@@ -171,14 +171,14 @@ CREATE CONSTRAINT company_name FOR (c:Company) REQUIRE c.name IS UNIQUE;`
 		t.Errorf("expected at least 2 resources, got %d", len(resources))
 	}
 
-	// Verify we found Person and Company
+	// Verify we found Person and Company (now returns Neo4j labels, not Go variable names)
 	foundPerson := false
 	foundCompany := false
 	for _, r := range resources {
-		if r.Name == "person" {
+		if r.Name == "Person" {
 			foundPerson = true
 		}
-		if r.Name == "company" {
+		if r.Name == "Company" {
 			foundCompany = true
 		}
 	}

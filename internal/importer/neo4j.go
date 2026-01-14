@@ -377,7 +377,8 @@ func (i *Neo4jImporter) buildTypeDefinitions(
 
 	// Process constraints
 	for _, c := range constraints {
-		if c.EntityType == "NODE" {
+		switch c.EntityType {
+		case "NODE":
 			if node, exists := nodeTypes[c.Label]; exists {
 				node.Constraints = append(node.Constraints, c)
 
@@ -392,7 +393,7 @@ func (i *Neo4jImporter) buildTypeDefinitions(
 					}
 				}
 			}
-		} else if c.EntityType == "RELATIONSHIP" {
+		case "RELATIONSHIP":
 			if rel, exists := relTypes[c.Label]; exists {
 				rel.Constraints = append(rel.Constraints, c)
 			}
@@ -401,11 +402,12 @@ func (i *Neo4jImporter) buildTypeDefinitions(
 
 	// Process indexes
 	for _, idx := range indexes {
-		if idx.EntityType == "NODE" {
+		switch idx.EntityType {
+		case "NODE":
 			if node, exists := nodeTypes[idx.Label]; exists {
 				node.Indexes = append(node.Indexes, idx)
 			}
-		} else if idx.EntityType == "RELATIONSHIP" {
+		case "RELATIONSHIP":
 			if rel, exists := relTypes[idx.Label]; exists {
 				rel.Indexes = append(rel.Indexes, idx)
 			}

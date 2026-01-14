@@ -26,15 +26,6 @@ type mcpServer struct {
 	Cwd     string   `json:"cwd,omitempty"`
 }
 
-// Available MCP tools - must match what's registered in mcp.go
-var mcpTools = []string{
-	"wetwire_init",
-	"wetwire_build",
-	"wetwire_lint",
-	"wetwire_validate",
-	"wetwire_list",
-	"wetwire_graph",
-}
 
 // EnsureInstalled installs the Kiro agent configuration if not already present.
 func EnsureInstalled() error {

@@ -251,9 +251,9 @@ CREATE CONSTRAINT product_sku FOR (p:Product) REQUIRE p.sku IS UNIQUE;`
 			foundPerson = true
 		case "Company":
 			foundCompany = true
-		case "order":
+		case "Order":
 			foundOrder = true
-		case "product":
+		case "Product":
 			foundProduct = true
 		}
 	}
@@ -265,9 +265,9 @@ CREATE CONSTRAINT product_sku FOR (p:Product) REQUIRE p.sku IS UNIQUE;`
 		t.Error("list did not find Company (from init)")
 	}
 	if !foundOrder {
-		t.Error("list did not find order (from import)")
+		t.Error("list did not find Order (from import)")
 	}
 	if !foundProduct {
-		t.Error("list did not find product (from import)")
+		t.Error("list did not find Product (from import)")
 	}
 }

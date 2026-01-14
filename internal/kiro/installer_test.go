@@ -12,8 +12,8 @@ func TestInstallConfig_WritesCorrectFormat(t *testing.T) {
 	// Use temp dir as home
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	// Install config
 	config := NewConfig()
@@ -69,8 +69,8 @@ func TestInstallConfig_WritesCorrectFormat(t *testing.T) {
 func TestInstallConfig_AgentFileExists(t *testing.T) {
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	config := NewConfig()
 	err := InstallConfig(config)
@@ -87,8 +87,8 @@ func TestInstallConfig_AgentFileExists(t *testing.T) {
 func TestInstallConfig_UsesFullPath(t *testing.T) {
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	// Create a fake binary in ~/go/bin
 	goBin := filepath.Join(tmpHome, "go", "bin")
@@ -135,8 +135,8 @@ func TestInstallConfig_MCPServerFormat(t *testing.T) {
 	// Verify the MCP server config matches kiro's expected format
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	// Create a fake binary
 	goBin := filepath.Join(tmpHome, "go", "bin")
@@ -203,8 +203,8 @@ func TestInstallConfig_NoInvalidToolReferences(t *testing.T) {
 	// Verify the config doesn't reference any invalid/placeholder tools
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	config := NewConfig()
 	if err := InstallConfig(config); err != nil {
@@ -231,8 +231,8 @@ func TestInstallConfig_MinimalValidStructure(t *testing.T) {
 	// Test that the generated config has the minimal valid structure for kiro
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	config := NewConfig()
 	if err := InstallConfig(config); err != nil {
@@ -284,8 +284,8 @@ func TestInstallConfig_HasToolsArray(t *testing.T) {
 	// This is required for kiro to enable tool usage (see GitHub issue #2640)
 	tmpHome := t.TempDir()
 	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpHome)
+	defer func() { _ = os.Setenv("HOME", origHome) }()
 
 	config := NewConfig()
 	if err := InstallConfig(config); err != nil {
@@ -328,9 +328,7 @@ func TestInstallConfig_SetsCwd(t *testing.T) {
 	// Test that cwd is set in MCP server config so it runs in the project directory
 	// Without this, wetwire_list scans the wrong directory and returns empty results
 	tmpHome := t.TempDir()
-	origHome := os.Getenv("HOME")
 	t.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", origHome)
 
 	// Set a specific work directory
 	projectDir := filepath.Join(tmpHome, "my-project")
