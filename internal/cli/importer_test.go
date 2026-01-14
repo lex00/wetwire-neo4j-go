@@ -105,3 +105,88 @@ func TestImporterCLI_DefaultPackageName(t *testing.T) {
 		t.Errorf("expected default package to be 'schema', got: %s", pkg)
 	}
 }
+
+func TestImporterCLI_WriteToFile_AutoAppendsGoExtension(t *testing.T) {
+	// Test that output without .go extension gets it appended automatically
+	tmpDir := t.TempDir()
+
+	cypherContent := `CREATE CONSTRAINT test_id IF NOT EXISTS FOR (t:Test) REQUIRE t.id IS UNIQUE;`
+	cypherFile := filepath.Join(tmpDir, "input.cypher")
+	if err := os.WriteFile(cypherFile, []byte(cypherContent), 0644); err != nil {
+		t.Fatalf("failed to write Cypher file: %v", err)
+	}
+
+	// Output path WITHOUT .go extension
+	outputFile := filepath.Join(tmpDir, "schema")
+
+	importer := NewImporterCLI()
+	err := importer.ImportToFile(cypherFile, "", "", "", "", "schema", outputFile)
+	if err != nil {
+		t.Fatalf("import to file failed: %v", err)
+	}
+
+	// Should have created schema.go, not schema
+	expectedFile := filepath.Join(tmpDir, "schema.go")
+	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+		t.Errorf("expected file %s to exist (auto-appended .go)", expectedFile)
+	}
+
+	// The bare "schema" file should NOT exist
+	if _, err := os.Stat(outputFile); err == nil {
+		// Only fail if schema.go doesn't exist (if user specified schema.go, both checks pass)
+		if outputFile != expectedFile {
+			t.Errorf("bare file %s should not exist when .go was auto-appended", outputFile)
+		}
+	}
+}
+
+func TestImporterCLI_E2E_ImportThenList(t *testing.T) {
+	// End-to-end test: import schema → scanner finds it
+	tmpDir := t.TempDir()
+
+	// Create cypher file with schema
+	cypherContent := `CREATE CONSTRAINT person_id FOR (p:Person) REQUIRE p.id IS UNIQUE;
+CREATE CONSTRAINT company_name FOR (c:Company) REQUIRE c.name IS UNIQUE;`
+	cypherFile := filepath.Join(tmpDir, "schema.cypher")
+	if err := os.WriteFile(cypherFile, []byte(cypherContent), 0644); err != nil {
+		t.Fatalf("failed to write Cypher file: %v", err)
+	}
+
+	// Import to output file (without .go - should be auto-appended)
+	outputFile := filepath.Join(tmpDir, "schema")
+	importer := NewImporterCLI()
+	if err := importer.ImportToFile(cypherFile, "", "", "", "", "schema", outputFile); err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+
+	// Now use the scanner directly to find resources
+	lister := NewLister()
+	resources, err := lister.ScanDir(tmpDir)
+	if err != nil {
+		t.Fatalf("scan failed: %v", err)
+	}
+
+	// Should find at least 2 node types (Person and Company)
+	if len(resources) < 2 {
+		t.Errorf("expected at least 2 resources, got %d", len(resources))
+	}
+
+	// Verify we found Person and Company
+	foundPerson := false
+	foundCompany := false
+	for _, r := range resources {
+		if r.Name == "person" {
+			foundPerson = true
+		}
+		if r.Name == "company" {
+			foundCompany = true
+		}
+	}
+
+	if !foundPerson {
+		t.Error("scanner did not find Person node type")
+	}
+	if !foundCompany {
+		t.Error("scanner did not find Company node type")
+	}
+}

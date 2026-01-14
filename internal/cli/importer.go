@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/lex00/wetwire-neo4j-go/internal/importer"
 )
@@ -108,6 +109,11 @@ func (i *ImporterCLI) ImportToFile(cypherFile, uri, username, password, database
 	code, err := gen.Generate(result)
 	if err != nil {
 		return fmt.Errorf("failed to generate code: %w", err)
+	}
+
+	// Ensure output file has .go extension (required for scanner to find it)
+	if !strings.HasSuffix(outputFile, ".go") {
+		outputFile = outputFile + ".go"
 	}
 
 	// Write to file
