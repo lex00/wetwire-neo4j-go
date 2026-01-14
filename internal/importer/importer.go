@@ -177,24 +177,30 @@ func (g *Generator) generateNodeType(node NodeTypeDefinition) string {
 		sb.WriteString("\t},\n")
 	}
 
-	// Constraints
+	// Constraints - collect all valid constraints first, then write in a single block
+	var constraintLines []string
 	for _, c := range node.Constraints {
 		switch c.Type {
 		case "UNIQUENESS":
-			sb.WriteString("\tConstraints: []schema.Constraint{\n")
-			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.Unique, Properties: %s},\n", formatStringSlice(c.Properties)))
-			sb.WriteString("\t},\n")
+			constraintLines = append(constraintLines, fmt.Sprintf("\t\t{Type: schema.UNIQUE, Properties: %s},\n", formatStringSlice(c.Properties)))
 		case "NODE_KEY":
-			sb.WriteString("\tConstraints: []schema.Constraint{\n")
-			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.NodeKey, Properties: %s},\n", formatStringSlice(c.Properties)))
-			sb.WriteString("\t},\n")
+			constraintLines = append(constraintLines, fmt.Sprintf("\t\t{Type: schema.NODE_KEY, Properties: %s},\n", formatStringSlice(c.Properties)))
 		}
 	}
+	if len(constraintLines) > 0 {
+		sb.WriteString("\tConstraints: []schema.Constraint{\n")
+		for _, line := range constraintLines {
+			sb.WriteString(line)
+		}
+		sb.WriteString("\t},\n")
+	}
 
-	// Indexes
-	for _, idx := range node.Indexes {
+	// Indexes - collect all indexes first, then write in a single block
+	if len(node.Indexes) > 0 {
 		sb.WriteString("\tIndexes: []schema.Index{\n")
-		sb.WriteString(fmt.Sprintf("\t\t{Type: schema.%s, Properties: %s},\n", mapIndexType(idx.Type), formatStringSlice(idx.Properties)))
+		for _, idx := range node.Indexes {
+			sb.WriteString(fmt.Sprintf("\t\t{Type: schema.%s, Properties: %s},\n", mapIndexType(idx.Type), formatStringSlice(idx.Properties)))
+		}
 		sb.WriteString("\t},\n")
 	}
 
@@ -285,16 +291,18 @@ func mapNeo4jType(t string) string {
 
 func mapIndexType(t string) string {
 	switch strings.ToUpper(t) {
-	case "RANGE":
-		return "RangeIndex"
+	case "RANGE", "BTREE":
+		return "BTREE"
 	case "FULLTEXT":
-		return "FullTextIndex"
+		return "FULLTEXT"
 	case "VECTOR":
-		return "VectorIndex"
+		return "VECTOR"
 	case "TEXT":
-		return "TextIndex"
+		return "TEXT"
+	case "POINT":
+		return "POINT_INDEX"
 	default:
-		return "RangeIndex"
+		return "BTREE"
 	}
 }
 

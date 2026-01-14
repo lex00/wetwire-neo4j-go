@@ -156,11 +156,13 @@ func TestMapIndexType(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"RANGE", "RangeIndex"},
-		{"FULLTEXT", "FullTextIndex"},
-		{"VECTOR", "VectorIndex"},
-		{"TEXT", "TextIndex"},
-		{"unknown", "RangeIndex"},
+		{"RANGE", "BTREE"},
+		{"BTREE", "BTREE"},
+		{"FULLTEXT", "FULLTEXT"},
+		{"VECTOR", "VECTOR"},
+		{"TEXT", "TEXT"},
+		{"POINT", "POINT_INDEX"},
+		{"unknown", "BTREE"},
 	}
 
 	for _, tt := range tests {
@@ -519,5 +521,69 @@ func TestMapNeo4jType_MatchesSchemaPackage(t *testing.T) {
 		if got != expectedConstant {
 			t.Errorf("mapNeo4jType(%q) = %q, want %q (must match schema package constant)", neo4jType, got, expectedConstant)
 		}
+	}
+}
+
+func TestGenerator_MultipleConstraintsAndIndexes(t *testing.T) {
+	// Test that multiple constraints and indexes are combined in single blocks
+	// (not written as duplicate struct fields)
+	g := NewGenerator("schema")
+
+	result := &ImportResult{
+		NodeTypes: []NodeTypeDefinition{
+			{
+				Label: "Person",
+				Properties: []PropertyDefinition{
+					{Name: "id", Type: "STRING", Required: true},
+					{Name: "email", Type: "STRING", Required: true},
+					{Name: "name", Type: "STRING"},
+				},
+				Constraints: []ConstraintDefinition{
+					{Type: "UNIQUENESS", Properties: []string{"id"}},
+					{Type: "UNIQUENESS", Properties: []string{"email"}},
+					{Type: "NODE_KEY", Properties: []string{"id", "email"}},
+				},
+				Indexes: []IndexDefinition{
+					{Type: "RANGE", Properties: []string{"name"}},
+					{Type: "FULLTEXT", Properties: []string{"name"}},
+				},
+			},
+		},
+	}
+
+	code, err := g.Generate(result)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Count occurrences of "Constraints:" - should be exactly 1
+	constraintsCount := strings.Count(code, "Constraints:")
+	if constraintsCount != 1 {
+		t.Errorf("expected 1 'Constraints:' field, got %d (duplicate fields would cause compile error)", constraintsCount)
+	}
+
+	// Count occurrences of "Indexes:" - should be exactly 1
+	indexesCount := strings.Count(code, "Indexes:")
+	if indexesCount != 1 {
+		t.Errorf("expected 1 'Indexes:' field, got %d (duplicate fields would cause compile error)", indexesCount)
+	}
+
+	// Verify all constraints are present
+	if !strings.Contains(code, `schema.UNIQUE, Properties: []string{"id"}`) {
+		t.Error("missing id uniqueness constraint")
+	}
+	if !strings.Contains(code, `schema.UNIQUE, Properties: []string{"email"}`) {
+		t.Error("missing email uniqueness constraint")
+	}
+	if !strings.Contains(code, `schema.NODE_KEY, Properties: []string{"id", "email"}`) {
+		t.Error("missing node key constraint")
+	}
+
+	// Verify all indexes are present
+	if !strings.Contains(code, `schema.BTREE, Properties: []string{"name"}`) {
+		t.Error("missing BTREE index")
+	}
+	if !strings.Contains(code, `schema.FULLTEXT, Properties: []string{"name"}`) {
+		t.Error("missing FULLTEXT index")
 	}
 }

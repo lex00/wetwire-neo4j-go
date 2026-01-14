@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "wetwire-neo4j": {
+      "command": "wetwire-neo4j",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

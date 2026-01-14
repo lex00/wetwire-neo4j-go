@@ -40,6 +40,25 @@ const (
 	KindRetriever ResourceKind = "Retriever"
 )
 
+// PropertyInfo describes a property on a node or relationship type.
+type PropertyInfo struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Required bool   `json:"required,omitempty"`
+}
+
+// ConstraintInfo describes a constraint on a node type.
+type ConstraintInfo struct {
+	Type       string   `json:"type"`
+	Properties []string `json:"properties"`
+}
+
+// IndexInfo describes an index on a node type.
+type IndexInfo struct {
+	Type       string   `json:"type"`
+	Properties []string `json:"properties"`
+}
+
 // DiscoveredResource represents a resource found in source code.
 type DiscoveredResource struct {
 	// Name is the resource name (struct name or variable name).
@@ -54,6 +73,17 @@ type DiscoveredResource struct {
 	Package string
 	// Dependencies are the names of other resources this one references.
 	Dependencies []string
+
+	// Properties contains property definitions for NodeType and RelationshipType.
+	Properties []PropertyInfo `json:"properties,omitempty"`
+	// Constraints contains constraint definitions for NodeType.
+	Constraints []ConstraintInfo `json:"constraints,omitempty"`
+	// Indexes contains index definitions for NodeType.
+	Indexes []IndexInfo `json:"indexes,omitempty"`
+	// Source is the source node label for RelationshipType.
+	Source string `json:"source,omitempty"`
+	// Target is the target node label for RelationshipType.
+	Target string `json:"target,omitempty"`
 }
 
 // Scanner discovers resources in Go source files.
@@ -218,14 +248,29 @@ func (s *Scanner) ScanFile(filename string) ([]DiscoveredResource, error) {
 					resourceName = name.Name
 				}
 
-				resources = append(resources, DiscoveredResource{
+				// Extract additional details based on resource kind
+				res := DiscoveredResource{
 					Name:         resourceName,
 					Kind:         kind,
 					File:         filename,
 					Line:         pos.Line,
 					Package:      pkgName,
 					Dependencies: deps,
-				})
+				}
+
+				// Extract properties, constraints, indexes for NodeType and RelationshipType
+				if kind == KindNodeType || kind == KindRelationshipType {
+					res.Properties = s.extractProperties(compLit)
+				}
+				if kind == KindNodeType {
+					res.Constraints = s.extractConstraints(compLit)
+					res.Indexes = s.extractIndexes(compLit)
+				}
+				if kind == KindRelationshipType {
+					res.Source, res.Target = s.extractSourceTarget(compLit)
+				}
+
+				resources = append(resources, res)
 			}
 		}
 	}
@@ -402,31 +447,244 @@ func (s *Scanner) extractCompositeLitDependencies(lit *ast.CompositeLit) []strin
 // extractLabelField extracts the Label field value from a composite literal.
 // Returns empty string if Label field not found.
 func (s *Scanner) extractLabelField(lit *ast.CompositeLit) string {
+	return s.extractStringField(lit, "Label")
+}
+
+// extractStringField extracts a string field value from a composite literal.
+func (s *Scanner) extractStringField(lit *ast.CompositeLit, fieldName string) string {
 	for _, elt := range lit.Elts {
 		kv, ok := elt.(*ast.KeyValueExpr)
 		if !ok {
 			continue
 		}
 
-		// Check if key is "Label"
 		keyIdent, ok := kv.Key.(*ast.Ident)
-		if !ok || keyIdent.Name != "Label" {
+		if !ok || keyIdent.Name != fieldName {
 			continue
 		}
 
-		// Extract string value
 		basicLit, ok := kv.Value.(*ast.BasicLit)
 		if !ok || basicLit.Kind != token.STRING {
 			continue
 		}
 
-		// Remove quotes from string literal
 		value := basicLit.Value
 		if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
 			return value[1 : len(value)-1]
 		}
 	}
 	return ""
+}
+
+// extractProperties extracts property definitions from a composite literal.
+func (s *Scanner) extractProperties(lit *ast.CompositeLit) []PropertyInfo {
+	var props []PropertyInfo
+
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		keyIdent, ok := kv.Key.(*ast.Ident)
+		if !ok || keyIdent.Name != "Properties" {
+			continue
+		}
+
+		// Properties should be a composite literal (slice)
+		propsLit, ok := kv.Value.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+
+		// Each element is a Property struct
+		for _, propElt := range propsLit.Elts {
+			propLit, ok := propElt.(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+
+			prop := PropertyInfo{}
+			for _, propField := range propLit.Elts {
+				propKV, ok := propField.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+
+				propKey, ok := propKV.Key.(*ast.Ident)
+				if !ok {
+					continue
+				}
+
+				switch propKey.Name {
+				case "Name":
+					if bl, ok := propKV.Value.(*ast.BasicLit); ok && bl.Kind == token.STRING {
+						prop.Name = strings.Trim(bl.Value, `"`)
+					}
+				case "Type":
+					// Type can be schema.STRING or just an identifier
+					prop.Type = s.extractTypeConstant(propKV.Value)
+				case "Required":
+					if ident, ok := propKV.Value.(*ast.Ident); ok {
+						prop.Required = ident.Name == "true"
+					}
+				}
+			}
+
+			if prop.Name != "" {
+				props = append(props, prop)
+			}
+		}
+	}
+
+	return props
+}
+
+// extractTypeConstant extracts a type constant value (e.g., schema.STRING -> "STRING").
+func (s *Scanner) extractTypeConstant(expr ast.Expr) string {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name
+	case *ast.SelectorExpr:
+		// schema.STRING -> STRING
+		return e.Sel.Name
+	}
+	return ""
+}
+
+// extractConstraints extracts constraint definitions from a composite literal.
+func (s *Scanner) extractConstraints(lit *ast.CompositeLit) []ConstraintInfo {
+	var constraints []ConstraintInfo
+
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		keyIdent, ok := kv.Key.(*ast.Ident)
+		if !ok || keyIdent.Name != "Constraints" {
+			continue
+		}
+
+		constraintsLit, ok := kv.Value.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+
+		for _, cElt := range constraintsLit.Elts {
+			cLit, ok := cElt.(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+
+			c := ConstraintInfo{}
+			for _, cField := range cLit.Elts {
+				cKV, ok := cField.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+
+				cKey, ok := cKV.Key.(*ast.Ident)
+				if !ok {
+					continue
+				}
+
+				switch cKey.Name {
+				case "Type":
+					c.Type = s.extractTypeConstant(cKV.Value)
+				case "Properties":
+					c.Properties = s.extractStringSlice(cKV.Value)
+				}
+			}
+
+			if c.Type != "" {
+				constraints = append(constraints, c)
+			}
+		}
+	}
+
+	return constraints
+}
+
+// extractIndexes extracts index definitions from a composite literal.
+func (s *Scanner) extractIndexes(lit *ast.CompositeLit) []IndexInfo {
+	var indexes []IndexInfo
+
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		keyIdent, ok := kv.Key.(*ast.Ident)
+		if !ok || keyIdent.Name != "Indexes" {
+			continue
+		}
+
+		indexesLit, ok := kv.Value.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+
+		for _, iElt := range indexesLit.Elts {
+			iLit, ok := iElt.(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+
+			idx := IndexInfo{}
+			for _, iField := range iLit.Elts {
+				iKV, ok := iField.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+
+				iKey, ok := iKV.Key.(*ast.Ident)
+				if !ok {
+					continue
+				}
+
+				switch iKey.Name {
+				case "Type":
+					idx.Type = s.extractTypeConstant(iKV.Value)
+				case "Properties":
+					idx.Properties = s.extractStringSlice(iKV.Value)
+				}
+			}
+
+			if idx.Type != "" {
+				indexes = append(indexes, idx)
+			}
+		}
+	}
+
+	return indexes
+}
+
+// extractStringSlice extracts a []string value from an expression.
+func (s *Scanner) extractStringSlice(expr ast.Expr) []string {
+	var result []string
+
+	lit, ok := expr.(*ast.CompositeLit)
+	if !ok {
+		return result
+	}
+
+	for _, elt := range lit.Elts {
+		if bl, ok := elt.(*ast.BasicLit); ok && bl.Kind == token.STRING {
+			result = append(result, strings.Trim(bl.Value, `"`))
+		}
+	}
+
+	return result
+}
+
+// extractSourceTarget extracts Source and Target fields from a relationship composite literal.
+func (s *Scanner) extractSourceTarget(lit *ast.CompositeLit) (source, target string) {
+	source = s.extractStringField(lit, "Source")
+	target = s.extractStringField(lit, "Target")
+	return
 }
 
 // walkExprForDeps walks an expression tree looking for identifier references.
