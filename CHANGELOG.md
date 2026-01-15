@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated wetwire-core-go dependency from v1.5.2 to v1.5.4
+  - Includes fix for Kiro provider cwd handling to ensure MCP tools run in correct directory
+
+
 ## [1.5.12] - 2026-01-13
 
 ### Added
