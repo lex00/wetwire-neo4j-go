@@ -42,7 +42,6 @@ func main() {
 
 	// Add custom commands that aren't part of the core domain interface
 	rootCmd.AddCommand(newValidateCommand())
-	rootCmd.AddCommand(newImportCommand())
 	rootCmd.AddCommand(newDesignCmd())
 	rootCmd.AddCommand(newTestCmd())
 	rootCmd.AddCommand(newMCPCommand())
@@ -89,51 +88,6 @@ This checks that:
 	cmd.Flags().StringVar(&password, "password", "", "Neo4j password (or $NEO4J_PASSWORD)")
 	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "List discovered resources without validating")
-
-	return cmd
-}
-
-func newImportCommand() *cobra.Command {
-	var file string
-	var uri string
-	var username string
-	var password string
-	var database string
-	var packageName string
-	var output string
-
-	cmd := &cobra.Command{
-		Use:   "import",
-		Short: "Import schemas from Neo4j or Cypher files",
-		Long: `Import generates Go code from existing Neo4j schemas.
-
-Sources:
-- Cypher file containing CREATE CONSTRAINT/INDEX statements
-- Live Neo4j database
-
-The generated Go code uses wetwire-neo4j-go schema types.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			importer := cli.NewImporterCLI()
-
-			if output != "" {
-				return importer.ImportToFile(file, uri, username, password, database, packageName, output)
-			}
-
-			if file != "" {
-				return importer.ImportFromCypher(file, packageName, cmd.OutOrStdout())
-			}
-
-			return importer.ImportFromNeo4j(uri, username, password, database, packageName, cmd.OutOrStdout())
-		},
-	}
-
-	cmd.Flags().StringVarP(&file, "file", "f", "", "Cypher file to import from")
-	cmd.Flags().StringVar(&uri, "uri", "", "Neo4j connection URI (or $NEO4J_URI)")
-	cmd.Flags().StringVar(&username, "username", "neo4j", "Neo4j username")
-	cmd.Flags().StringVar(&password, "password", "", "Neo4j password")
-	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
-	cmd.Flags().StringVar(&packageName, "package", "schema", "Go package name for generated code")
-	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file path (default: stdout)")
 
 	return cmd
 }
