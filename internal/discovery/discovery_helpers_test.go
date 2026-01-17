@@ -2,20 +2,23 @@ package discovery
 
 import (
 	"testing"
+
+	coreast "github.com/lex00/wetwire-core-go/ast"
 )
 
-func TestIsPrimitiveType(t *testing.T) {
-	primitives := []string{"bool", "string", "int", "int64", "float64", "byte", "error", "any"}
-	for _, p := range primitives {
-		if !isPrimitiveType(p) {
-			t.Errorf("%s should be primitive", p)
+func TestIsBuiltinType(t *testing.T) {
+	// Test that coreast.IsBuiltinType covers the primitives we care about
+	builtins := []string{"bool", "string", "int", "int64", "float64", "byte", "error", "any"}
+	for _, p := range builtins {
+		if !coreast.IsBuiltinType(p) {
+			t.Errorf("%s should be builtin type", p)
 		}
 	}
 
-	nonPrimitives := []string{"Person", "MyType", "NodeType"}
-	for _, p := range nonPrimitives {
-		if isPrimitiveType(p) {
-			t.Errorf("%s should not be primitive", p)
+	nonBuiltins := []string{"Person", "MyType", "NodeType"}
+	for _, p := range nonBuiltins {
+		if coreast.IsBuiltinType(p) {
+			t.Errorf("%s should not be builtin type", p)
 		}
 	}
 }
