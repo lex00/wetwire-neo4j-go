@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 	"github.com/lex00/wetwire-neo4j-go/internal/validator"
 )
@@ -119,7 +118,7 @@ func (v *ValidatorCLI) ValidateDryRun(path string, w io.Writer) error {
 	return nil
 }
 
-// Validator implements cmd.Validator for Neo4j configuration validation.
+// Validator implements Validator for Neo4j configuration validation.
 // It uses environment variables for connection configuration:
 // - NEO4J_URI: Connection URI (e.g., bolt://localhost:7687)
 // - NEO4J_USERNAME: Username (default: neo4j)
@@ -134,7 +133,7 @@ func NewValidator() *Validator {
 
 // Validate validates Neo4j configurations in the given path.
 // If NEO4J_URI is not set, returns validation errors indicating connection is required.
-func (v *Validator) Validate(_ context.Context, path string, opts cmd.ValidateOptions) ([]cmd.ValidationError, error) {
+func (v *Validator) Validate(_ context.Context, path string, opts ValidateOptions) ([]ValidationError, error) {
 	// Check if path exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, fmt.Errorf("path does not exist: %s", path)
@@ -156,9 +155,9 @@ func (v *Validator) Validate(_ context.Context, path string, opts cmd.ValidateOp
 	uri := os.Getenv("NEO4J_URI")
 	if uri == "" {
 		// Return validation errors for each resource indicating connection needed
-		errors := make([]cmd.ValidationError, len(resources))
+		errors := make([]ValidationError, len(resources))
 		for i, r := range resources {
-			errors[i] = cmd.ValidationError{
+			errors[i] = ValidationError{
 				Path:    fmt.Sprintf("%s:%d", r.File, r.Line),
 				Message: fmt.Sprintf("cannot validate %s %q without NEO4J_URI configured", r.Kind, r.Name),
 				Code:    "NEO4J_CONN_REQUIRED",
@@ -186,7 +185,7 @@ func (v *Validator) Validate(_ context.Context, path string, opts cmd.ValidateOp
 		Database: database,
 	})
 	if err != nil {
-		return []cmd.ValidationError{{
+		return []ValidationError{{
 			Path:    path,
 			Message: fmt.Sprintf("failed to connect to Neo4j: %v", err),
 			Code:    "NEO4J_CONN_FAILED",

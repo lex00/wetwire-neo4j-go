@@ -19,7 +19,7 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/lex00/wetwire-core-go/cmd"
+	"github.com/lex00/wetwire-neo4j-go/domain"
 	"github.com/lex00/wetwire-neo4j-go/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -31,66 +31,27 @@ var (
 )
 
 func main() {
-	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-}
+	// Set version in domain
+	domain.Version = version
 
-func run() error {
-	rootCmd := cmd.NewRootCommand(
-		"wetwire-neo4j",
-		"Wetwire CLI for Neo4j GDS schema and algorithm definitions",
-	)
+	// Create domain instance
+	d := &domain.Neo4jDomain{}
 
-	// Create implementations
-	builder := cli.NewBuilder()
-	linter := cli.NewLinter()
-	initializer := cli.NewInitializer()
+	// Get root command from domain
+	rootCmd := domain.CreateRootCommand(d)
 
-	// Add commands
-	rootCmd.AddCommand(cmd.NewBuildCommand(builder))
-	rootCmd.AddCommand(cmd.NewLintCommand(linter))
-	rootCmd.AddCommand(cmd.NewInitCommand(initializer))
-	rootCmd.AddCommand(newListCommand())
+	// Add custom commands that aren't part of the core domain interface
 	rootCmd.AddCommand(newValidateCommand())
 	rootCmd.AddCommand(newImportCommand())
-	rootCmd.AddCommand(newGraphCommand())
 	rootCmd.AddCommand(newDesignCmd())
 	rootCmd.AddCommand(newTestCmd())
 	rootCmd.AddCommand(newMCPCommand())
 	rootCmd.AddCommand(newVersionCommand())
 
-	return rootCmd.Execute()
-}
-
-func newListCommand() *cobra.Command {
-	var path string
-	var format string
-
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List discovered Neo4j definitions",
-		Long: `List discovers and displays all Neo4j schema and algorithm definitions
-in the specified path.
-
-Supported definition types:
-- NodeType: Node label definitions
-- RelationshipType: Relationship type definitions
-- Algorithm: GDS algorithm configurations
-- Pipeline: ML pipeline configurations
-- Retriever: GraphRAG retriever configurations
-- KGPipeline: Knowledge graph construction pipelines`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			lister := cli.NewLister()
-			return lister.List(path, format)
-		},
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
-
-	cmd.Flags().StringVarP(&path, "path", "p", ".", "Path to source definitions")
-	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
-
-	return cmd
 }
 
 func newValidateCommand() *cobra.Command {
@@ -173,34 +134,6 @@ The generated Go code uses wetwire-neo4j-go schema types.`,
 	cmd.Flags().StringVar(&database, "database", "neo4j", "Database name")
 	cmd.Flags().StringVar(&packageName, "package", "schema", "Go package name for generated code")
 	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file path (default: stdout)")
-
-	return cmd
-}
-
-func newGraphCommand() *cobra.Command {
-	var path string
-	var format string
-
-	cmd := &cobra.Command{
-		Use:   "graph",
-		Short: "Visualize resource dependencies",
-		Long: `Graph generates a dependency graph visualization of discovered resources.
-
-Supported formats:
-- dot: Graphviz DOT format (default)
-- mermaid: Mermaid diagram format
-
-The graph shows:
-- Resources as nodes, colored by kind
-- Dependencies as directed edges`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			graph := cli.NewGraphCLI()
-			return graph.Generate(path, format, cmd.OutOrStdout())
-		},
-	}
-
-	cmd.Flags().StringVarP(&path, "path", "p", ".", "Path to source definitions")
-	cmd.Flags().StringVarP(&format, "format", "f", "dot", "Output format (dot, mermaid)")
 
 	return cmd
 }

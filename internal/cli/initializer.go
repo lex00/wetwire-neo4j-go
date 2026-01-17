@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/lex00/wetwire-core-go/cmd"
 )
 
 // Initializer creates new Neo4j/GDS project scaffolding.
@@ -18,7 +16,7 @@ func NewInitializer() *Initializer {
 }
 
 // Init creates a new project with the specified name.
-func (i *Initializer) Init(ctx context.Context, path string, opts cmd.InitOptions) error {
+func (i *Initializer) Init(ctx context.Context, path string, opts InitOptions) error {
 	if path == "" {
 		return fmt.Errorf("project path is required")
 	}
@@ -129,15 +127,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lex00/wetwire-core-go/cmd"
+	
 	"github.com/lex00/wetwire-neo4j-go/internal/cli"
 )
 
 func main() {
-	root := cmd.NewRootCommand("wetwire-neo4j", "%s - Neo4j/GDS infrastructure")
-	root.AddCommand(cmd.NewBuildCommand(cli.NewBuilder()))
-	root.AddCommand(cmd.NewLintCommand(cli.NewLinter()))
-	root.AddCommand(cmd.NewInitCommand(cli.NewInitializer()))
+	root := NewRootCommand("wetwire-neo4j", "%s - Neo4j/GDS infrastructure")
+	root.AddCommand(NewBuildCommand(cli.NewBuilder()))
+	root.AddCommand(NewLintCommand(cli.NewLinter()))
+	root.AddCommand(NewInitCommand(cli.NewInitializer()))
 
 	if err := root.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %%v\n", err)

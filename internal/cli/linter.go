@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
 	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
@@ -13,7 +12,7 @@ import (
 	"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 )
 
-// Linter implements the cmd.Linter interface for Neo4j definitions.
+// Linter implements the Linter interface for Neo4j definitions.
 type Linter struct {
 	scanner *discovery.Scanner
 	linter  *lint.Linter
@@ -27,8 +26,8 @@ func NewLinter() *Linter {
 	}
 }
 
-// Lint implements cmd.Linter.Lint.
-func (l *Linter) Lint(ctx context.Context, path string, opts cmd.LintOptions) ([]cmd.Issue, error) {
+// Lint implements Linter.Lint.
+func (l *Linter) Lint(ctx context.Context, path string, opts LintOptions) ([]Issue, error) {
 	// Discover resources
 	resources, err := l.scanner.ScanDir(path)
 	if err != nil {
@@ -39,7 +38,7 @@ func (l *Linter) Lint(ctx context.Context, path string, opts cmd.LintOptions) ([
 		return nil, nil
 	}
 
-	var issues []cmd.Issue
+	var issues []Issue
 
 	// For each discovered resource, generate structural lint issues
 	for _, r := range resources {
@@ -51,15 +50,15 @@ func (l *Linter) Lint(ctx context.Context, path string, opts cmd.LintOptions) ([
 }
 
 // lintResource generates lint issues for a discovered resource.
-func (l *Linter) lintResource(r discovery.DiscoveredResource) []cmd.Issue {
-	var issues []cmd.Issue
+func (l *Linter) lintResource(r discovery.DiscoveredResource) []Issue {
+	var issues []Issue
 
 	// Add basic structural checks based on resource type
 	switch r.Kind {
 	case discovery.KindNodeType:
 		// Check naming convention
 		if !isPascalCase(r.Name) {
-			issues = append(issues, cmd.Issue{
+			issues = append(issues, Issue{
 				File:     r.File,
 				Line:     r.Line,
 				Column:   1,
@@ -71,7 +70,7 @@ func (l *Linter) lintResource(r discovery.DiscoveredResource) []cmd.Issue {
 	case discovery.KindRelationshipType:
 		// Check naming convention (should be SCREAMING_SNAKE_CASE)
 		if !isScreamingSnakeCase(r.Name) {
-			issues = append(issues, cmd.Issue{
+			issues = append(issues, Issue{
 				File:     r.File,
 				Line:     r.Line,
 				Column:   1,
@@ -86,46 +85,46 @@ func (l *Linter) lintResource(r discovery.DiscoveredResource) []cmd.Issue {
 }
 
 // LintAlgorithm lints an algorithm configuration.
-func (l *Linter) LintAlgorithm(algo algorithms.Algorithm, file string, line int) []cmd.Issue {
+func (l *Linter) LintAlgorithm(algo algorithms.Algorithm, file string, line int) []Issue {
 	results := l.linter.LintAlgorithm(algo)
 	return l.convertResults(results, file, line)
 }
 
 // LintPipeline lints a pipeline configuration.
-func (l *Linter) LintPipeline(pipe pipelines.Pipeline, file string, line int) []cmd.Issue {
+func (l *Linter) LintPipeline(pipe pipelines.Pipeline, file string, line int) []Issue {
 	results := l.linter.LintPipeline(pipe)
 	return l.convertResults(results, file, line)
 }
 
 // LintKGPipeline lints a KG pipeline configuration.
-func (l *Linter) LintKGPipeline(pipe kg.KGPipeline, file string, line int) []cmd.Issue {
+func (l *Linter) LintKGPipeline(pipe kg.KGPipeline, file string, line int) []Issue {
 	results := l.linter.LintKGPipeline(pipe)
 	return l.convertResults(results, file, line)
 }
 
 // LintNodeType lints a node type definition.
-func (l *Linter) LintNodeType(node *schema.NodeType, file string, line int) []cmd.Issue {
+func (l *Linter) LintNodeType(node *schema.NodeType, file string, line int) []Issue {
 	results := l.linter.LintNodeType(node)
 	return l.convertResults(results, file, line)
 }
 
 // LintRelationshipType lints a relationship type definition.
-func (l *Linter) LintRelationshipType(rel *schema.RelationshipType, file string, line int) []cmd.Issue {
+func (l *Linter) LintRelationshipType(rel *schema.RelationshipType, file string, line int) []Issue {
 	results := l.linter.LintRelationshipType(rel)
 	return l.convertResults(results, file, line)
 }
 
 // LintAll lints multiple resources.
-func (l *Linter) LintAll(resources []any, file string, line int) []cmd.Issue {
+func (l *Linter) LintAll(resources []any, file string, line int) []Issue {
 	results := l.linter.LintAll(resources)
 	return l.convertResults(results, file, line)
 }
 
-// convertResults converts lint.LintResult to cmd.Issue.
-func (l *Linter) convertResults(results []lint.LintResult, file string, line int) []cmd.Issue {
-	issues := make([]cmd.Issue, len(results))
+// convertResults converts lint.LintResult to Issue.
+func (l *Linter) convertResults(results []lint.LintResult, file string, line int) []Issue {
+	issues := make([]Issue, len(results))
 	for i, r := range results {
-		issues[i] = cmd.Issue{
+		issues[i] = Issue{
 			File:     file,
 			Line:     line,
 			Column:   1,

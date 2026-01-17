@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
 	"github.com/lex00/wetwire-neo4j-go/internal/pipelines"
@@ -67,7 +66,7 @@ func TestBuilder_Build_EmptyDir(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 
-	opts := cmd.BuildOptions{Verbose: true}
+	opts := BuildOptions{Verbose: true}
 	err = b.Build(context.Background(), tmpDir, opts)
 	if err != nil {
 		t.Errorf("Build on empty dir failed: %v", err)
@@ -98,7 +97,7 @@ var Person = schema.NodeType{
 		t.Fatal(err)
 	}
 
-	opts := cmd.BuildOptions{DryRun: true, Verbose: true}
+	opts := BuildOptions{DryRun: true, Verbose: true}
 	err = b.Build(context.Background(), tmpDir, opts)
 	if err != nil {
 		t.Errorf("Build failed: %v", err)

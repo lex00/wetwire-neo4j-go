@@ -6,13 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 )
 
 func TestInitializer_Interface(t *testing.T) {
-	// Verify Initializer implements cmd.Initializer interface
-	var _ cmd.Initializer = (*Initializer)(nil)
 }
 
 func TestInitializer_Init(t *testing.T) {
@@ -21,7 +18,7 @@ func TestInitializer_Init(t *testing.T) {
 	projectPath := filepath.Join(tmpDir, projectName)
 
 	init := NewInitializer()
-	err := init.Init(context.Background(), projectPath, cmd.InitOptions{})
+	err := init.Init(context.Background(), projectPath, InitOptions{})
 	if err != nil {
 		t.Fatalf("Init failed: %v", err)
 	}
@@ -77,13 +74,13 @@ func TestInitializer_InitForce(t *testing.T) {
 	init := NewInitializer()
 
 	// Without force, should fail
-	err := init.Init(context.Background(), projectPath, cmd.InitOptions{Force: false})
+	err := init.Init(context.Background(), projectPath, InitOptions{Force: false})
 	if err == nil {
 		t.Error("expected error when directory exists without force")
 	}
 
 	// With force, should succeed
-	err = init.Init(context.Background(), projectPath, cmd.InitOptions{Force: true})
+	err = init.Init(context.Background(), projectPath, InitOptions{Force: true})
 	if err != nil {
 		t.Errorf("Init with force failed: %v", err)
 	}
@@ -102,7 +99,7 @@ func TestInitializer_InitWithTemplate(t *testing.T) {
 	init := NewInitializer()
 
 	// Test with "gds" template
-	err := init.Init(context.Background(), projectPath, cmd.InitOptions{Template: "gds"})
+	err := init.Init(context.Background(), projectPath, InitOptions{Template: "gds"})
 	if err != nil {
 		t.Fatalf("Init with gds template failed: %v", err)
 	}
@@ -121,7 +118,7 @@ func TestInitializer_InitGraphRAGTemplate(t *testing.T) {
 	init := NewInitializer()
 
 	// Test with "graphrag" template
-	err := init.Init(context.Background(), projectPath, cmd.InitOptions{Template: "graphrag"})
+	err := init.Init(context.Background(), projectPath, InitOptions{Template: "graphrag"})
 	if err != nil {
 		t.Fatalf("Init with graphrag template failed: %v", err)
 	}
@@ -142,7 +139,7 @@ func TestInitializer_InvalidPath(t *testing.T) {
 	init := NewInitializer()
 
 	// Empty path should fail
-	err := init.Init(context.Background(), "", cmd.InitOptions{})
+	err := init.Init(context.Background(), "", InitOptions{})
 	if err == nil {
 		t.Error("expected error for empty path")
 	}
@@ -154,7 +151,7 @@ func TestInitializer_E2E_InitThenList(t *testing.T) {
 	projectPath := filepath.Join(tmpDir, "e2e-test")
 
 	init := NewInitializer()
-	err := init.Init(context.Background(), projectPath, cmd.InitOptions{})
+	err := init.Init(context.Background(), projectPath, InitOptions{})
 	if err != nil {
 		t.Fatalf("Init failed: %v", err)
 	}
@@ -197,7 +194,7 @@ func TestE2E_InitImportList(t *testing.T) {
 
 	// Step 1: Init project
 	init := NewInitializer()
-	if err := init.Init(context.Background(), projectPath, cmd.InitOptions{}); err != nil {
+	if err := init.Init(context.Background(), projectPath, InitOptions{}); err != nil {
 		t.Fatalf("Init failed: %v", err)
 	}
 
