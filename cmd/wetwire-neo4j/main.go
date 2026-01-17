@@ -11,6 +11,8 @@
 //	wetwire-neo4j graph        - Visualize resource dependencies
 //	wetwire-neo4j design       - AI-assisted schema and algorithm design
 //	wetwire-neo4j test         - Run persona-based testing
+//	wetwire-neo4j diff         - Compare two Neo4j configurations
+//	wetwire-neo4j watch        - Watch for file changes and auto-rebuild
 //	wetwire-neo4j version      - Show version information
 package main
 
@@ -44,6 +46,8 @@ func main() {
 	rootCmd.AddCommand(newValidateCommand())
 	rootCmd.AddCommand(newDesignCmd())
 	rootCmd.AddCommand(newTestCmd())
+	rootCmd.AddCommand(newDiffCmd())
+	rootCmd.AddCommand(newWatchCmd())
 	rootCmd.AddCommand(newMCPCommand())
 	rootCmd.AddCommand(newVersionCommand())
 
