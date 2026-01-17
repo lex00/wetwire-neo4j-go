@@ -3,14 +3,14 @@ module github.com/lex00/wetwire-neo4j-go
 go 1.23.0
 
 require (
-	github.com/lex00/wetwire-core-go v1.13.0
+	github.com/fsnotify/fsnotify v1.9.0
+	github.com/lex00/wetwire-core-go v1.14.0
 	github.com/neo4j/neo4j-go-driver/v5 v5.28.4
 	github.com/spf13/cobra v1.10.2
 )
 
 require (
 	github.com/anthropics/anthropic-sdk-go v1.19.0 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
