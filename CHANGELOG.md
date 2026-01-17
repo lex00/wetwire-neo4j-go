@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Migrated discovery package to use `wetwire-core-go/ast` utilities
+  - Replaced local `getTypeName` with `coreast.ExtractTypeName`
+  - Replaced local `isPrimitiveType` with `coreast.IsBuiltinType`
+  - Replaced `isPrimitiveType` in `walkExprForDeps` with `coreast.IsBuiltinIdent`
+  - Updated wetwire-core-go dependency from v1.15.0 to v1.16.0
+  - Reduces code duplication and aligns with shared AST utilities
+
 - **BREAKING**: Migrated MCP server to use `domain.BuildMCPServer()` auto-generation
   - Updated wetwire-core-go dependency from v1.12.0 to v1.13.0
   - Replaced 592-line manual MCP implementation with 24-line auto-generated version
