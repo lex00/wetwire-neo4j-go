@@ -6,12 +6,12 @@
 //
 // Example usage:
 //
-//	scanner := discovery.NewScanner()
+//	scanner := discover.NewScanner()
 //	resources, err := scanner.ScanDir("./schemas")
 //	for _, r := range resources {
 //	    fmt.Printf("%s: %s at %s:%d\n", r.Type, r.Name, r.File, r.Line)
 //	}
-package discovery
+package discover
 
 import (
 	"fmt"

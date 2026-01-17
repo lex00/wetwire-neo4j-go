@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
 	"github.com/lex00/wetwire-neo4j-go/internal/pipelines"
 	"github.com/lex00/wetwire-neo4j-go/internal/projections"
@@ -21,7 +21,7 @@ import (
 
 // Builder implements the Builder interface for Neo4j definitions.
 type Builder struct {
-	scanner          *discovery.Scanner
+	scanner          *discover.Scanner
 	cypherSerializer *serializer.CypherSerializer
 	jsonSerializer   *serializer.JSONSerializer
 	algoSerializer   *algorithms.AlgorithmSerializer
@@ -34,7 +34,7 @@ type Builder struct {
 // NewBuilder creates a new Builder.
 func NewBuilder() *Builder {
 	return &Builder{
-		scanner:          discovery.NewScanner(),
+		scanner:          discover.NewScanner(),
 		cypherSerializer: serializer.NewCypherSerializer(),
 		jsonSerializer:   serializer.NewJSONSerializer(),
 		algoSerializer:   algorithms.NewAlgorithmSerializer(),
@@ -61,7 +61,7 @@ func (b *Builder) Build(ctx context.Context, path string, opts BuildOptions) err
 	}
 
 	// Sort resources by dependency order
-	graph := discovery.NewDependencyGraph(resources)
+	graph := discover.NewDependencyGraph(resources)
 	sortedResources, err := graph.TopologicalSort()
 	if err != nil {
 		return fmt.Errorf("failed to resolve dependencies: %w", err)
@@ -111,7 +111,7 @@ func (b *Builder) detectFormat(output string) string {
 }
 
 // generateOutput generates the output in the specified format.
-func (b *Builder) generateOutput(resources []discovery.DiscoveredResource, format string, verbose bool) (string, error) {
+func (b *Builder) generateOutput(resources []discover.DiscoveredResource, format string, verbose bool) (string, error) {
 	switch format {
 	case "json":
 		return b.generateJSON(resources, verbose)
@@ -123,11 +123,11 @@ func (b *Builder) generateOutput(resources []discovery.DiscoveredResource, forma
 }
 
 // generateCypher generates Cypher output for schema resources.
-func (b *Builder) generateCypher(resources []discovery.DiscoveredResource, verbose bool) (string, error) {
+func (b *Builder) generateCypher(resources []discover.DiscoveredResource, verbose bool) (string, error) {
 	var statements []string
 
 	// Count resources by type for summary
-	counts := make(map[discovery.ResourceKind]int)
+	counts := make(map[discover.ResourceKind]int)
 	for _, r := range resources {
 		counts[r.Kind]++
 	}
@@ -144,15 +144,15 @@ func (b *Builder) generateCypher(resources []discovery.DiscoveredResource, verbo
 	// In a full implementation, we'd need to load and parse the actual definitions
 	for _, r := range resources {
 		switch r.Kind {
-		case discovery.KindNodeType:
+		case discover.KindNodeType:
 			statements = append(statements, fmt.Sprintf("// NodeType: %s (from %s:%d)", r.Name, r.File, r.Line))
-		case discovery.KindRelationshipType:
+		case discover.KindRelationshipType:
 			statements = append(statements, fmt.Sprintf("// RelationshipType: %s (from %s:%d)", r.Name, r.File, r.Line))
-		case discovery.KindAlgorithm:
+		case discover.KindAlgorithm:
 			statements = append(statements, fmt.Sprintf("// Algorithm: %s (from %s:%d)", r.Name, r.File, r.Line))
-		case discovery.KindPipeline:
+		case discover.KindPipeline:
 			statements = append(statements, fmt.Sprintf("// Pipeline: %s (from %s:%d)", r.Name, r.File, r.Line))
-		case discovery.KindRetriever:
+		case discover.KindRetriever:
 			statements = append(statements, fmt.Sprintf("// Retriever: %s (from %s:%d)", r.Name, r.File, r.Line))
 		}
 	}
@@ -161,7 +161,7 @@ func (b *Builder) generateCypher(resources []discovery.DiscoveredResource, verbo
 }
 
 // generateJSON generates JSON output for all resources.
-func (b *Builder) generateJSON(resources []discovery.DiscoveredResource, verbose bool) (string, error) {
+func (b *Builder) generateJSON(resources []discover.DiscoveredResource, verbose bool) (string, error) {
 	output := make(map[string][]map[string]any)
 
 	for _, r := range resources {

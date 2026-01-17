@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Renamed `internal/discovery` to `internal/discover` (#104)
+  - Updated package name from `discovery` to `discover`
+  - Updated all imports across the codebase
+
 - Migrated discovery package to use `wetwire-core-go/ast` utilities
   - Replaced local `getTypeName` with `coreast.ExtractTypeName`
   - Replaced local `isPrimitiveType` with `coreast.IsBuiltinType`
@@ -60,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Shows constraints with type and properties
   - Shows indexes with type and properties
   - Shows source/target for relationship types
-  - AST extraction methods in `internal/discovery`
+  - AST extraction methods in `internal/discover`
 
 ### Fixed
 
@@ -76,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically discovers existing schema definitions before running `design` command
   - Injects summarized schema context into agent prompts (both Anthropic and Kiro providers)
   - Helps agents extend existing schemas rather than recreating them
-  - `FormatSchemaContext()` function in `internal/discovery/context.go`
+  - `FormatSchemaContext()` function in `internal/discover/context.go`
   - `Neo4jDomainWithContext()` and `NewConfigWithContext()` for context-aware configs
 
 - MCP server integration in `cmd/wetwire-neo4j`
@@ -133,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Validator` for schema validation with PascalCase/SCREAMING_SNAKE_CASE enforcement
   - Full test coverage for types and validation
 
-- Discovery system in `internal/discovery`
+- Discovery system in `internal/discover`
   - `Scanner` for AST-based resource discovery in Go source files
   - Detects NodeType, RelationshipType, Algorithm, Pipeline, and Retriever definitions
   - Supports struct types with embedded resource types and variable declarations

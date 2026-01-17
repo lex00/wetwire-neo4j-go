@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
 	"github.com/lex00/wetwire-neo4j-go/internal/lint"
 	"github.com/lex00/wetwire-neo4j-go/internal/pipelines"
@@ -14,14 +14,14 @@ import (
 
 // Linter implements the Linter interface for Neo4j definitions.
 type Linter struct {
-	scanner *discovery.Scanner
+	scanner *discover.Scanner
 	linter  *lint.Linter
 }
 
 // NewLinter creates a new Linter.
 func NewLinter() *Linter {
 	return &Linter{
-		scanner: discovery.NewScanner(),
+		scanner: discover.NewScanner(),
 		linter:  lint.NewLinter(),
 	}
 }
@@ -50,12 +50,12 @@ func (l *Linter) Lint(ctx context.Context, path string, opts LintOptions) ([]Iss
 }
 
 // lintResource generates lint issues for a discovered resource.
-func (l *Linter) lintResource(r discovery.DiscoveredResource) []Issue {
+func (l *Linter) lintResource(r discover.DiscoveredResource) []Issue {
 	var issues []Issue
 
 	// Add basic structural checks based on resource type
 	switch r.Kind {
-	case discovery.KindNodeType:
+	case discover.KindNodeType:
 		// Check naming convention
 		if !isPascalCase(r.Name) {
 			issues = append(issues, Issue{
@@ -67,7 +67,7 @@ func (l *Linter) lintResource(r discovery.DiscoveredResource) []Issue {
 				Rule:     "WN4052",
 			})
 		}
-	case discovery.KindRelationshipType:
+	case discover.KindRelationshipType:
 		// Check naming convention (should be SCREAMING_SNAKE_CASE)
 		if !isScreamingSnakeCase(r.Name) {
 			issues = append(issues, Issue{

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 )
 
 func TestNewLister(t *testing.T) {
@@ -142,7 +142,7 @@ var Person = schema.NodeType{
 		t.Fatal(err)
 	}
 
-	err = l.ListByKind(tmpDir, discovery.KindNodeType, "table")
+	err = l.ListByKind(tmpDir, discover.KindNodeType, "table")
 	if err != nil {
 		t.Errorf("ListByKind failed: %v", err)
 	}
@@ -171,7 +171,7 @@ var Person = schema.NodeType{
 		t.Fatal(err)
 	}
 
-	err = l.ListByKind(tmpDir, discovery.KindAlgorithm, "table")
+	err = l.ListByKind(tmpDir, discover.KindAlgorithm, "table")
 	if err != nil {
 		t.Errorf("ListByKind failed: %v", err)
 	}

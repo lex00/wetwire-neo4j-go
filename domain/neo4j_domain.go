@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	coredomain "github.com/lex00/wetwire-core-go/domain"
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/lint"
 	"github.com/spf13/cobra"
 )
@@ -102,7 +102,7 @@ func (b *neo4jBuilder) Build(ctx *Context, path string, opts BuildOpts) (*Result
 	}
 
 	// Discover all resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
@@ -116,7 +116,7 @@ func (b *neo4jBuilder) Build(ctx *Context, path string, opts BuildOpts) (*Result
 	}
 
 	// Sort resources by dependency order
-	graph := discovery.NewDependencyGraph(resources)
+	graph := discover.NewDependencyGraph(resources)
 	sortedResources, err := graph.TopologicalSort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve dependencies: %w", err)
@@ -154,7 +154,7 @@ func (b *neo4jBuilder) Build(ctx *Context, path string, opts BuildOpts) (*Result
 	return NewResultWithData("Build completed", output), nil
 }
 
-func (b *neo4jBuilder) buildJSON(resources []discovery.DiscoveredResource, pretty bool) (string, error) {
+func (b *neo4jBuilder) buildJSON(resources []discover.DiscoveredResource, pretty bool) (string, error) {
 	output := make(map[string]any)
 
 	// Group by resource kind
@@ -166,15 +166,15 @@ func (b *neo4jBuilder) buildJSON(resources []discovery.DiscoveredResource, prett
 
 	for _, r := range resources {
 		switch r.Kind {
-		case discovery.KindNodeType:
+		case discover.KindNodeType:
 			nodeTypes = append(nodeTypes, resourceToMap(r))
-		case discovery.KindRelationshipType:
+		case discover.KindRelationshipType:
 			relTypes = append(relTypes, resourceToMap(r))
-		case discovery.KindAlgorithm:
+		case discover.KindAlgorithm:
 			algorithms = append(algorithms, resourceToMap(r))
-		case discovery.KindPipeline:
+		case discover.KindPipeline:
 			pipelines = append(pipelines, resourceToMap(r))
-		case discovery.KindRetriever:
+		case discover.KindRetriever:
 			retrievers = append(retrievers, resourceToMap(r))
 		}
 	}
@@ -210,7 +210,7 @@ func (b *neo4jBuilder) buildJSON(resources []discovery.DiscoveredResource, prett
 	return string(data), nil
 }
 
-func (b *neo4jBuilder) buildCypher(resources []discovery.DiscoveredResource) (string, error) {
+func (b *neo4jBuilder) buildCypher(resources []discover.DiscoveredResource) (string, error) {
 	// TODO: Implement Cypher generation
 	// For now, return a placeholder
 	return "-- Cypher output not yet implemented\n", nil
@@ -231,7 +231,7 @@ func detectFormatFromOutput(output string) string {
 	}
 }
 
-func resourceToMap(r discovery.DiscoveredResource) map[string]any {
+func resourceToMap(r discover.DiscoveredResource) map[string]any {
 	m := map[string]any{
 		"name": r.Name,
 		"kind": string(r.Kind),
@@ -271,7 +271,7 @@ func (l *neo4jLinter) Lint(ctx *Context, path string, opts LintOpts) (*Result, e
 	}
 
 	// Discover all resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
@@ -498,7 +498,7 @@ func (l *neo4jLister) List(ctx *Context, path string, opts ListOpts) (*Result, e
 	}
 
 	// Discover all resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
@@ -506,7 +506,7 @@ func (l *neo4jLister) List(ctx *Context, path string, opts ListOpts) (*Result, e
 
 	// Filter by type if specified
 	if opts.Type != "" {
-		filtered := []discovery.DiscoveredResource{}
+		filtered := []discover.DiscoveredResource{}
 		for _, r := range resources {
 			if string(r.Kind) == opts.Type || matchesTypeAlias(string(r.Kind), opts.Type) {
 				filtered = append(filtered, r)
@@ -564,14 +564,14 @@ func (g *neo4jGrapher) Graph(ctx *Context, path string, opts GraphOpts) (*Result
 	}
 
 	// Discover all resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
 	}
 
 	// Build dependency graph
-	depGraph := discovery.NewDependencyGraph(resources)
+	depGraph := discover.NewDependencyGraph(resources)
 
 	// Generate output based on format
 	var graphOutput string
@@ -587,7 +587,7 @@ func (g *neo4jGrapher) Graph(ctx *Context, path string, opts GraphOpts) (*Result
 	return NewResultWithData("Graph generated", graphOutput), nil
 }
 
-func generateDOT(resources []discovery.DiscoveredResource, graph *discovery.DependencyGraph) string {
+func generateDOT(resources []discover.DiscoveredResource, graph *discover.DependencyGraph) string {
 	output := "digraph G {\n"
 	output += "  rankdir=LR;\n"
 	output += "  node [shape=box];\n\n"
@@ -598,19 +598,19 @@ func generateDOT(resources []discovery.DiscoveredResource, graph *discovery.Depe
 		color := ""
 
 		switch r.Kind {
-		case discovery.KindNodeType:
+		case discover.KindNodeType:
 			shape = "ellipse"
 			color = "lightblue"
-		case discovery.KindRelationshipType:
+		case discover.KindRelationshipType:
 			shape = "diamond"
 			color = "lightgreen"
-		case discovery.KindAlgorithm:
+		case discover.KindAlgorithm:
 			shape = "hexagon"
 			color = "lightyellow"
-		case discovery.KindPipeline:
+		case discover.KindPipeline:
 			shape = "folder"
 			color = "lightpink"
-		case discovery.KindRetriever:
+		case discover.KindRetriever:
 			shape = "component"
 			color = "lightgray"
 		}
@@ -636,7 +636,7 @@ func generateDOT(resources []discovery.DiscoveredResource, graph *discovery.Depe
 	return output
 }
 
-func generateMermaid(resources []discovery.DiscoveredResource, graph *discovery.DependencyGraph) string {
+func generateMermaid(resources []discover.DiscoveredResource, graph *discover.DependencyGraph) string {
 	output := "graph LR\n"
 
 	// Add nodes
@@ -644,15 +644,15 @@ func generateMermaid(resources []discovery.DiscoveredResource, graph *discovery.
 		nodeType := ""
 
 		switch r.Kind {
-		case discovery.KindNodeType:
+		case discover.KindNodeType:
 			nodeType = "(%s)"
-		case discovery.KindRelationshipType:
+		case discover.KindRelationshipType:
 			nodeType = "{%s}"
-		case discovery.KindAlgorithm:
+		case discover.KindAlgorithm:
 			nodeType = "[[%s]]"
-		case discovery.KindPipeline:
+		case discover.KindPipeline:
 			nodeType = "[/%s/]"
-		case discovery.KindRetriever:
+		case discover.KindRetriever:
 			nodeType = "{{%s}}"
 		default:
 			nodeType = "[%s]"
