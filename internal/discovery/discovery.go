@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	coreast "github.com/lex00/wetwire-core-go/ast"
 )
 
 // ResourceKind represents the type of discovered resource.
@@ -341,17 +343,11 @@ func (s *Scanner) detectResourceKind(structType *ast.StructType) ResourceKind {
 			continue
 		}
 
-		typeName := s.getTypeName(field.Type)
-		// Try direct match first
+		// Use coreast.ExtractTypeName which returns (typeName, pkgName).
+		// It unwraps pointers and selectors, returning just the base type name.
+		typeName, _ := coreast.ExtractTypeName(field.Type)
 		if kind, ok := s.typeAliases[typeName]; ok {
 			return kind
-		}
-		// Try without package prefix (e.g., "schema.NodeType" -> "NodeType")
-		if idx := strings.LastIndex(typeName, "."); idx >= 0 {
-			baseName := typeName[idx+1:]
-			if kind, ok := s.typeAliases[baseName]; ok {
-				return kind
-			}
 		}
 	}
 
@@ -360,48 +356,11 @@ func (s *Scanner) detectResourceKind(structType *ast.StructType) ResourceKind {
 
 // detectCompositeLitKind detects the resource kind from a composite literal.
 func (s *Scanner) detectCompositeLitKind(lit *ast.CompositeLit) ResourceKind {
-	typeName := s.getTypeName(lit.Type)
-
-	// Direct type match
+	// Use coreast.ExtractTypeName which returns (typeName, pkgName).
+	// It unwraps pointers and selectors, returning just the base type name.
+	typeName, _ := coreast.ExtractTypeName(lit.Type)
 	if kind, ok := s.typeAliases[typeName]; ok {
 		return kind
-	}
-
-	// Check for pointer to known type
-	if strings.HasPrefix(typeName, "*") {
-		baseName := strings.TrimPrefix(typeName, "*")
-		if kind, ok := s.typeAliases[baseName]; ok {
-			return kind
-		}
-	}
-
-	// Try without package prefix (e.g., "schema.NodeType" -> "NodeType")
-	if idx := strings.LastIndex(typeName, "."); idx >= 0 {
-		baseName := typeName[idx+1:]
-		if kind, ok := s.typeAliases[baseName]; ok {
-			return kind
-		}
-	}
-
-	return ""
-}
-
-// getTypeName extracts the type name from an expression.
-func (s *Scanner) getTypeName(expr ast.Expr) string {
-	switch t := expr.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.SelectorExpr:
-		// pkg.Type
-		if ident, ok := t.X.(*ast.Ident); ok {
-			return ident.Name + "." + t.Sel.Name
-		}
-	case *ast.StarExpr:
-		// *Type
-		return "*" + s.getTypeName(t.X)
-	case *ast.UnaryExpr:
-		// &Type{}
-		return s.getTypeName(t.X)
 	}
 	return ""
 }
@@ -416,13 +375,11 @@ func (s *Scanner) extractDependencies(structType *ast.StructType) []string {
 	}
 
 	for _, field := range structType.Fields.List {
-		// Look for fields with types that could be resource references
-		typeName := s.getTypeName(field.Type)
-		baseName := strings.TrimPrefix(typeName, "*")
-		baseName = strings.TrimPrefix(baseName, "[]")
+		// Use coreast.ExtractTypeName which unwraps pointers, slices, and selectors
+		baseName, _ := coreast.ExtractTypeName(field.Type)
 
-		// Skip primitive types
-		if isPrimitiveType(baseName) {
+		// Skip builtin types (use coreast.IsBuiltinType for Go builtins)
+		if coreast.IsBuiltinType(baseName) {
 			continue
 		}
 
@@ -738,7 +695,8 @@ func (s *Scanner) walkExprForDeps(expr ast.Expr, deps *[]string, seen map[string
 	case *ast.Ident:
 		// Check if this could be a resource reference
 		name := e.Name
-		if !isPrimitiveType(name) && isValidIdentifier(name) && !seen[name] {
+		// Use coreast.IsBuiltinIdent to skip Go builtins (types, funcs, consts)
+		if !coreast.IsBuiltinIdent(name) && isValidIdentifier(name) && !seen[name] {
 			// Heuristic: resource names typically start with uppercase
 			if len(name) > 0 && name[0] >= 'A' && name[0] <= 'Z' {
 				*deps = append(*deps, name)
@@ -765,20 +723,6 @@ func (s *Scanner) walkExprForDeps(expr ast.Expr, deps *[]string, seen map[string
 	case *ast.IndexExpr:
 		s.walkExprForDeps(e.X, deps, seen)
 	}
-}
-
-// isPrimitiveType checks if a type name is a Go primitive.
-func isPrimitiveType(name string) bool {
-	primitives := map[string]bool{
-		"bool": true, "string": true,
-		"int": true, "int8": true, "int16": true, "int32": true, "int64": true,
-		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
-		"float32": true, "float64": true,
-		"complex64": true, "complex128": true,
-		"byte": true, "rune": true,
-		"error": true, "any": true,
-	}
-	return primitives[name]
 }
 
 // isValidIdentifier checks if a string is a valid Go identifier.

@@ -9,6 +9,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/lex00/wetwire-core-go v1.15.0 h1:vd9d7HWfqvaVLGDWLgV7trGYnZLnHbIc63rn1b6BZCM=
 github.com/lex00/wetwire-core-go v1.15.0/go.mod h1:gYfxg4rNIwr2AGiPsCF/ssFczDRI/FGeuMaDCS/vdm4=
+github.com/lex00/wetwire-core-go v1.16.0 h1:0ImVYTGo5gz2B0pd4puZey7jbFmOCRiBjwMRyuSaLpk=
+github.com/lex00/wetwire-core-go v1.16.0/go.mod h1:gYfxg4rNIwr2AGiPsCF/ssFczDRI/FGeuMaDCS/vdm4=
 github.com/neo4j/neo4j-go-driver/v5 v5.28.4 h1:7toxehVcYkZbyxV4W3Ib9VcnyRBQPucF+VwNNmtSXi4=
 github.com/neo4j/neo4j-go-driver/v5 v5.28.4/go.mod h1:Vff8OwT7QpLm7L2yYr85XNWe9Rbqlbeb9asNXJTHO4k=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
