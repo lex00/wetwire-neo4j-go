@@ -307,6 +307,110 @@ func (l *neo4jLinter) Lint(ctx *Context, path string, opts LintOpts) (*Result, e
 type neo4jInitializer struct{}
 
 func (i *neo4jInitializer) Init(ctx *Context, path string, opts InitOpts) (*Result, error) {
+	// Use opts.Path if provided, otherwise fall back to path argument
+	targetPath := opts.Path
+	if targetPath == "" || targetPath == "." {
+		targetPath = path
+	}
+
+	// Handle scenario initialization
+	if opts.Scenario {
+		return i.initScenario(ctx, targetPath, opts)
+	}
+
+	// Basic project initialization
+	return i.initProject(ctx, targetPath, opts)
+}
+
+// initScenario creates a full scenario structure with prompts and expected outputs
+func (i *neo4jInitializer) initScenario(ctx *Context, path string, opts InitOpts) (*Result, error) {
+	name := opts.Name
+	if name == "" {
+		name = filepath.Base(path)
+	}
+
+	description := opts.Description
+	if description == "" {
+		description = "Neo4j GDS scenario"
+	}
+
+	// Use core's scenario scaffolding
+	scenario := coredomain.ScaffoldScenario(name, description, "neo4j")
+	created, err := coredomain.WriteScenario(path, scenario)
+	if err != nil {
+		return nil, fmt.Errorf("write scenario: %w", err)
+	}
+
+	// Create neo4j-specific expected directories
+	expectedDirs := []string{
+		filepath.Join(path, "expected", "schema"),
+		filepath.Join(path, "expected", "algorithms"),
+		filepath.Join(path, "expected", "pipelines"),
+	}
+	for _, dir := range expectedDirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("create directory %s: %w", dir, err)
+		}
+	}
+
+	// Create example schema in expected/schema/
+	exampleSchema := `package schema
+
+import "github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
+
+// Person represents a person node in the graph
+var Person = schema.NodeType{
+	Label:       "Person",
+	Description: "A person in the social network",
+	Properties: []schema.Property{
+		{
+			Name:     "name",
+			Type:     schema.StringType,
+			Required: true,
+		},
+		{
+			Name:     "email",
+			Type:     schema.StringType,
+			Unique:   true,
+		},
+	},
+	Constraints: []schema.Constraint{
+		{
+			Name:       "person_email_unique",
+			Type:       schema.UniqueConstraint,
+			Properties: []string{"email"},
+		},
+	},
+}
+
+// Knows represents a relationship between two people
+var Knows = schema.RelationshipType{
+	Label:       "KNOWS",
+	Source:      "Person",
+	Target:      "Person",
+	Cardinality: schema.ManyToMany,
+	Properties: []schema.Property{
+		{
+			Name: "since",
+			Type: schema.DateType,
+		},
+	},
+}
+`
+	schemaPath := filepath.Join(path, "expected", "schema", "schema.go")
+	if err := os.WriteFile(schemaPath, []byte(exampleSchema), 0644); err != nil {
+		return nil, fmt.Errorf("write example schema: %w", err)
+	}
+	created = append(created, "expected/schema/schema.go")
+
+	return NewResultWithData(
+		fmt.Sprintf("Created scenario %s with %d files", name, len(created)),
+		created,
+	), nil
+}
+
+// initProject creates a basic project with example schema
+func (i *neo4jInitializer) initProject(ctx *Context, path string, opts InitOpts) (*Result, error) {
 	// Create directory
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("create directory: %w", err)
