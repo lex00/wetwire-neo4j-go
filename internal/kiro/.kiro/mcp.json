@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "wetwire-neo4j": {
-      "command": "wetwire-neo4j",
+      "command": "/Users/alex/go/bin/wetwire-neo4j",
       "args": [
         "mcp"
       ]

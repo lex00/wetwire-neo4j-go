@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
 	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
@@ -20,7 +19,7 @@ import (
 	"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 )
 
-// Builder implements the cmd.Builder interface for Neo4j definitions.
+// Builder implements the Builder interface for Neo4j definitions.
 type Builder struct {
 	scanner          *discovery.Scanner
 	cypherSerializer *serializer.CypherSerializer
@@ -46,8 +45,8 @@ func NewBuilder() *Builder {
 	}
 }
 
-// Build implements cmd.Builder.Build.
-func (b *Builder) Build(ctx context.Context, path string, opts cmd.BuildOptions) error {
+// Build implements Builder.Build.
+func (b *Builder) Build(ctx context.Context, path string, opts BuildOptions) error {
 	// Discover resources
 	resources, err := b.scanner.ScanDir(path)
 	if err != nil {

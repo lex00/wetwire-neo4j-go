@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-neo4j-go/internal/algorithms"
 	"github.com/lex00/wetwire-neo4j-go/internal/kg"
 	"github.com/lex00/wetwire-neo4j-go/internal/pipelines"
@@ -36,7 +35,7 @@ func TestLinter_Lint_EmptyDir(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 
-	opts := cmd.LintOptions{}
+	opts := LintOptions{}
 	issues, err := l.Lint(context.Background(), tmpDir, opts)
 	if err != nil {
 		t.Errorf("Lint on empty dir failed: %v", err)
@@ -70,7 +69,7 @@ var person = schema.NodeType{
 		t.Fatal(err)
 	}
 
-	opts := cmd.LintOptions{}
+	opts := LintOptions{}
 	issues, err := l.Lint(context.Background(), tmpDir, opts)
 	if err != nil {
 		t.Errorf("Lint failed: %v", err)
@@ -324,9 +323,9 @@ func TestLinter_LintAll(t *testing.T) {
 	l := NewLinter()
 
 	resources := []any{
-		&algorithms.PageRank{DampingFactor: 1.5},      // Invalid
-		&schema.NodeType{Label: "person"},             // Invalid
-		&schema.RelationshipType{Label: "worksFor"},   // Invalid
+		&algorithms.PageRank{DampingFactor: 1.5},    // Invalid
+		&schema.NodeType{Label: "person"},           // Invalid
+		&schema.RelationshipType{Label: "worksFor"}, // Invalid
 	}
 
 	issues := l.LintAll(resources, "test.go", 10)

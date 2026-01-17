@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/lex00/wetwire-core-go/cmd"
 )
 
 func TestValidatorCLI_ValidateFromPath(t *testing.T) {
@@ -106,8 +104,6 @@ func TestValidatorCLI_ParseConfigDefaults(t *testing.T) {
 }
 
 func TestValidator_Interface(t *testing.T) {
-	// Verify Validator implements cmd.Validator interface
-	var _ cmd.Validator = (*Validator)(nil)
 }
 
 func TestValidator_Validate(t *testing.T) {
@@ -131,7 +127,7 @@ var Person = &schema.NodeType{
 	validator := NewValidator()
 
 	// Validate should return errors when no URI is configured
-	errors, err := validator.Validate(context.Background(), tmpDir, cmd.ValidateOptions{})
+	errors, err := validator.Validate(context.Background(), tmpDir, ValidateOptions{})
 	if err != nil {
 		t.Errorf("Validate returned error: %v", err)
 	}
@@ -148,7 +144,7 @@ func TestValidator_ValidateEmptyDir(t *testing.T) {
 	validator := NewValidator()
 
 	// Empty directory should return no errors (nothing to validate)
-	errors, err := validator.Validate(context.Background(), tmpDir, cmd.ValidateOptions{})
+	errors, err := validator.Validate(context.Background(), tmpDir, ValidateOptions{})
 	if err != nil {
 		t.Errorf("Validate returned error: %v", err)
 	}
@@ -162,7 +158,7 @@ func TestValidator_ValidateEmptyDir(t *testing.T) {
 func TestValidator_ValidateNonexistentPath(t *testing.T) {
 	validator := NewValidator()
 
-	_, err := validator.Validate(context.Background(), "/nonexistent/path/xyz", cmd.ValidateOptions{})
+	_, err := validator.Validate(context.Background(), "/nonexistent/path/xyz", ValidateOptions{})
 	if err == nil {
 		t.Error("expected error for nonexistent path")
 	}

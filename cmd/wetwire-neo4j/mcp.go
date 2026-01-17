@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lex00/wetwire-core-go/cmd"
 	"github.com/lex00/wetwire-core-go/mcp"
 
 	"github.com/lex00/wetwire-neo4j-go/internal/cli"
@@ -169,7 +168,7 @@ func handleMCPInit(ctx context.Context, args map[string]any) (string, error) {
 
 	// Use the CLI initializer
 	initializer := cli.NewInitializer()
-	opts := cmd.InitOptions{
+	opts := cli.InitOptions{
 		Template: template,
 		Force:    false,
 	}
@@ -210,7 +209,7 @@ func handleMCPBuild(ctx context.Context, args map[string]any) (string, error) {
 	os.Stdout = w
 
 	builder := cli.NewBuilder()
-	opts := cmd.BuildOptions{
+	opts := cli.BuildOptions{
 		DryRun:  true,
 		Verbose: false,
 	}
@@ -245,7 +244,7 @@ func handleMCPLint(ctx context.Context, args map[string]any) (string, error) {
 	}
 
 	linter := cli.NewLinter()
-	opts := cmd.LintOptions{
+	opts := cli.LintOptions{
 		Verbose: false,
 	}
 	issues, err := linter.Lint(ctx, path, opts)
@@ -457,14 +456,14 @@ type MCPListResult struct {
 
 // MCPResourceInfo describes a discovered resource.
 type MCPResourceInfo struct {
-	Name        string                    `json:"name"`
-	Kind        string                    `json:"kind"`
-	File        string                    `json:"file"`
-	Properties  []discovery.PropertyInfo  `json:"properties,omitempty"`
+	Name        string                     `json:"name"`
+	Kind        string                     `json:"kind"`
+	File        string                     `json:"file"`
+	Properties  []discovery.PropertyInfo   `json:"properties,omitempty"`
 	Constraints []discovery.ConstraintInfo `json:"constraints,omitempty"`
-	Indexes     []discovery.IndexInfo     `json:"indexes,omitempty"`
-	Source      string                    `json:"source,omitempty"`
-	Target      string                    `json:"target,omitempty"`
+	Indexes     []discovery.IndexInfo      `json:"indexes,omitempty"`
+	Source      string                     `json:"source,omitempty"`
+	Target      string                     `json:"target,omitempty"`
 }
 
 // MCPGraphResult is the result of the wetwire_graph tool.
