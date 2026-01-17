@@ -13,7 +13,7 @@ import (
 	"github.com/lex00/wetwire-core-go/agent/agents"
 	"github.com/lex00/wetwire-core-go/agent/orchestrator"
 	"github.com/lex00/wetwire-core-go/agent/results"
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/kiro"
 	"github.com/spf13/cobra"
 )
@@ -93,7 +93,7 @@ Example:
 // discoverSchemaContext scans the output directory for existing schema definitions
 // and formats them as context for the agent prompt.
 func discoverSchemaContext(dir string) string {
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(dir)
 	if err != nil {
 		// Log warning but continue without context
@@ -103,7 +103,7 @@ func discoverSchemaContext(dir string) string {
 	if len(resources) > 0 {
 		fmt.Fprintf(os.Stderr, "Discovered %d existing resources in %s\n", len(resources), dir)
 	}
-	return discovery.FormatSchemaContext(resources)
+	return discover.FormatSchemaContext(resources)
 }
 
 // launchKiroWithContext launches Kiro chat with schema context injected into the config.

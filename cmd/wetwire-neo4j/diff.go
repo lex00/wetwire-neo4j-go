@@ -7,7 +7,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/spf13/cobra"
 )
 
@@ -67,7 +67,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	path2 := args[1]
 
 	// Discover resources from both paths
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 
 	resources1, err := scanner.ScanDir(path1)
 	if err != nil {
@@ -96,12 +96,12 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func compareResources(old, new []discovery.DiscoveredResource) diffResult {
+func compareResources(old, new []discover.DiscoveredResource) diffResult {
 	result := diffResult{}
 
 	// Create maps for easier lookup
-	oldMap := make(map[string]discovery.DiscoveredResource)
-	newMap := make(map[string]discovery.DiscoveredResource)
+	oldMap := make(map[string]discover.DiscoveredResource)
+	newMap := make(map[string]discover.DiscoveredResource)
 
 	for _, r := range old {
 		oldMap[r.Name] = r

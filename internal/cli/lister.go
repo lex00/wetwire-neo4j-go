@@ -8,18 +8,18 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 )
 
 // Lister lists discovered Neo4j definitions.
 type Lister struct {
-	scanner *discovery.Scanner
+	scanner *discover.Scanner
 }
 
 // NewLister creates a new Lister.
 func NewLister() *Lister {
 	return &Lister{
-		scanner: discovery.NewScanner(),
+		scanner: discover.NewScanner(),
 	}
 }
 
@@ -54,7 +54,7 @@ func (l *Lister) List(path string, format string) error {
 }
 
 // listTable outputs resources in a table format.
-func (l *Lister) listTable(resources []discovery.DiscoveredResource) error {
+func (l *Lister) listTable(resources []discover.DiscoveredResource) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	// Header
@@ -77,7 +77,7 @@ func (l *Lister) listTable(resources []discovery.DiscoveredResource) error {
 }
 
 // listJSON outputs resources in JSON format.
-func (l *Lister) listJSON(resources []discovery.DiscoveredResource) error {
+func (l *Lister) listJSON(resources []discover.DiscoveredResource) error {
 	output := make(map[string][]map[string]any)
 
 	for _, r := range resources {
@@ -112,8 +112,8 @@ func (l *Lister) listJSON(resources []discovery.DiscoveredResource) error {
 }
 
 // printSummary prints a summary of discovered resources.
-func (l *Lister) printSummary(resources []discovery.DiscoveredResource) {
-	counts := make(map[discovery.ResourceKind]int)
+func (l *Lister) printSummary(resources []discover.DiscoveredResource) {
+	counts := make(map[discover.ResourceKind]int)
 	for _, r := range resources {
 		counts[r.Kind]++
 	}
@@ -121,7 +121,7 @@ func (l *Lister) printSummary(resources []discovery.DiscoveredResource) {
 	fmt.Printf("Total: %d definitions\n", len(resources))
 
 	// Sort kinds for consistent output
-	var kinds []discovery.ResourceKind
+	var kinds []discover.ResourceKind
 	for kind := range counts {
 		kinds = append(kinds, kind)
 	}
@@ -155,14 +155,14 @@ func shortenPath(path string) string {
 }
 
 // ListByKind lists resources filtered by kind.
-func (l *Lister) ListByKind(path string, kind discovery.ResourceKind, format string) error {
+func (l *Lister) ListByKind(path string, kind discover.ResourceKind, format string) error {
 	resources, err := l.scanner.ScanDir(path)
 	if err != nil {
 		return fmt.Errorf("failed to scan directory: %w", err)
 	}
 
 	// Filter by kind
-	var filtered []discovery.DiscoveredResource
+	var filtered []discover.DiscoveredResource
 	for _, r := range resources {
 		if r.Kind == kind {
 			filtered = append(filtered, r)
@@ -186,7 +186,7 @@ func (l *Lister) ListByKind(path string, kind discovery.ResourceKind, format str
 
 // ScanDir returns all discovered resources in a directory.
 // This is useful for programmatic access to discovery results.
-func (l *Lister) ScanDir(path string) ([]discovery.DiscoveredResource, error) {
+func (l *Lister) ScanDir(path string) ([]discover.DiscoveredResource, error) {
 	return l.scanner.ScanDir(path)
 }
 
@@ -202,7 +202,7 @@ func (l *Lister) ListDependencies(path string) error {
 		return nil
 	}
 
-	graph := discovery.NewDependencyGraph(resources)
+	graph := discover.NewDependencyGraph(resources)
 
 	fmt.Println("Dependency Graph:")
 	fmt.Println("-----------------")

@@ -29,7 +29,7 @@ wetwire-neo4j-go/
 ├── internal/
 │   ├── algorithms/     # GDS algorithm definitions
 │   ├── cli/            # CLI implementation
-│   ├── discovery/      # AST-based resource discovery
+│   ├── discover/       # AST-based resource discovery
 │   ├── importer/       # Import from Neo4j/Cypher
 │   ├── kg/             # Knowledge graph pipelines
 │   ├── lint/           # Lint rules (WN4xxx)

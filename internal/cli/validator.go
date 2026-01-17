@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/validator"
 )
 
@@ -57,7 +57,7 @@ func (v *ValidatorCLI) ValidateWithConfig(path string, config ValidatorConfig, w
 	}
 
 	// Discover resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(path)
 	if err != nil {
 		return fmt.Errorf("failed to scan directory: %w", err)
@@ -103,7 +103,7 @@ func (v *ValidatorCLI) ValidateWithConfig(path string, config ValidatorConfig, w
 // ValidateDryRun lists discovered resources without connecting to Neo4j.
 func (v *ValidatorCLI) ValidateDryRun(path string, w io.Writer) error {
 	// Discover resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(path)
 	if err != nil {
 		return fmt.Errorf("failed to scan directory: %w", err)
@@ -140,7 +140,7 @@ func (v *Validator) Validate(_ context.Context, path string, opts ValidateOption
 	}
 
 	// Discover resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan directory: %w", err)

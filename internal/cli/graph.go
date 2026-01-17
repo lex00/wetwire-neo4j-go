@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 )
 
 // GraphCLI provides CLI functionality for visualizing resource dependencies.
@@ -20,14 +20,14 @@ func NewGraphCLI() *GraphCLI {
 // Generate generates a dependency graph visualization from discovered resources.
 func (g *GraphCLI) Generate(path, format string, w io.Writer) error {
 	// Discover resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(path)
 	if err != nil {
 		return fmt.Errorf("failed to scan directory: %w", err)
 	}
 
 	// Build dependency graph
-	graph := discovery.NewDependencyGraph(resources)
+	graph := discover.NewDependencyGraph(resources)
 
 	switch strings.ToLower(format) {
 	case "dot", "graphviz":
@@ -40,23 +40,23 @@ func (g *GraphCLI) Generate(path, format string, w io.Writer) error {
 }
 
 // generateDOT outputs the graph in DOT (Graphviz) format.
-func (g *GraphCLI) generateDOT(resources []discovery.DiscoveredResource, graph *discovery.DependencyGraph, w io.Writer) error {
+func (g *GraphCLI) generateDOT(resources []discover.DiscoveredResource, graph *discover.DependencyGraph, w io.Writer) error {
 	_, _ = fmt.Fprintln(w, "digraph dependencies {")
 	_, _ = fmt.Fprintln(w, "  rankdir=TB;")
 	_, _ = fmt.Fprintln(w, "  node [shape=box];")
 	_, _ = fmt.Fprintln(w)
 
 	// Define node styles by kind
-	kindColors := map[discovery.ResourceKind]string{
-		discovery.KindNodeType:         "lightblue",
-		discovery.KindRelationshipType: "lightgreen",
-		discovery.KindAlgorithm:        "lightyellow",
-		discovery.KindPipeline:         "lightpink",
-		discovery.KindRetriever:        "lavender",
+	kindColors := map[discover.ResourceKind]string{
+		discover.KindNodeType:         "lightblue",
+		discover.KindRelationshipType: "lightgreen",
+		discover.KindAlgorithm:        "lightyellow",
+		discover.KindPipeline:         "lightpink",
+		discover.KindRetriever:        "lavender",
 	}
 
 	// Sort resources for deterministic output
-	sortedResources := make([]discovery.DiscoveredResource, len(resources))
+	sortedResources := make([]discover.DiscoveredResource, len(resources))
 	copy(sortedResources, resources)
 	sort.Slice(sortedResources, func(i, j int) bool {
 		return sortedResources[i].Name < sortedResources[j].Name
@@ -89,11 +89,11 @@ func (g *GraphCLI) generateDOT(resources []discovery.DiscoveredResource, graph *
 }
 
 // generateMermaid outputs the graph in Mermaid format.
-func (g *GraphCLI) generateMermaid(resources []discovery.DiscoveredResource, graph *discovery.DependencyGraph, w io.Writer) error {
+func (g *GraphCLI) generateMermaid(resources []discover.DiscoveredResource, graph *discover.DependencyGraph, w io.Writer) error {
 	_, _ = fmt.Fprintln(w, "graph TD")
 
 	// Sort resources for deterministic output
-	sortedResources := make([]discovery.DiscoveredResource, len(resources))
+	sortedResources := make([]discover.DiscoveredResource, len(resources))
 	copy(sortedResources, resources)
 	sort.Slice(sortedResources, func(i, j int) bool {
 		return sortedResources[i].Name < sortedResources[j].Name

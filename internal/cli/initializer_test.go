@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lex00/wetwire-neo4j-go/internal/discovery"
+	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 )
 
 func TestInitializer_Interface(t *testing.T) {
@@ -163,7 +163,7 @@ func TestInitializer_E2E_InitThenList(t *testing.T) {
 	}
 
 	// Now list should find resources
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(projectPath)
 	if err != nil {
 		t.Fatalf("ScanDir failed: %v", err)
@@ -224,7 +224,7 @@ CREATE CONSTRAINT product_sku FOR (p:Product) REQUIRE p.sku IS UNIQUE;`
 	}
 
 	// Step 3: List should find resources from both init and import
-	scanner := discovery.NewScanner()
+	scanner := discover.NewScanner()
 	resources, err := scanner.ScanDir(projectPath)
 	if err != nil {
 		t.Fatalf("ScanDir failed: %v", err)

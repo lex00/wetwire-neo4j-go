@@ -71,7 +71,7 @@ Key types:
 - `Constraint`: Defines UNIQUE, EXISTS, NODE_KEY, or REL_KEY constraints
 - `Index`: Defines BTREE, TEXT, FULLTEXT, POINT, or VECTOR indexes
 
-### internal/discovery/
+### internal/discover/
 
 AST-based resource discovery scans Go source files to find schema definitions.
 
@@ -307,7 +307,7 @@ The importer can:
    func (n *NewSchemaType) ResourceName() string { return n.Name }
    ```
 
-2. Add type alias to `internal/discovery/discovery.go`:
+2. Add type alias to `internal/discover/discovery.go`:
    ```go
    s.typeAliases["NewSchemaType"] = KindNewSchema
    ```
