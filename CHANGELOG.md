@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Split large lint test file for maintainability
+  - `lint_test.go` (830 lines) split into focused files:
+    - `lint_test.go` - Basic tests, utilities, configuration (~170 lines)
+    - `lint_algorithms_test.go` - Algorithm rule tests (~430 lines)
+    - `lint_schema_test.go` - Schema definition tests (~245 lines)
+  - No test file over 800 lines
+
 - Renamed `internal/discovery` to `internal/discover` (#104)
   - Updated package name from `discovery` to `discover`
   - Updated all imports across the codebase
