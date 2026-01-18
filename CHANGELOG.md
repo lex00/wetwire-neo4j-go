@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Knowledge graph scenario example in `examples/knowledge_graph_scenario/` (#115)
+  - Demonstrates complete KG pipeline for academic paper processing
+  - Includes schema definitions (Document, Person, Concept, Institution nodes)
+  - Shows entity extraction pipeline with OpenAI GPT-4
+  - Hybrid retriever combining vector and fulltext search
+  - Graph algorithms (PageRank for citations, Louvain for communities)
+  - Three persona prompts (beginner, intermediate, expert)
+  - Validation rules for minimum resource counts
+
 - Support for `LintOpts.Fix` and `LintOpts.Disable` in domain linter (#110)
   - `opts.Disable` skips specified lint rules by ID (e.g., `["WN4001", "WN4052"]`)
   - `opts.Fix` prepares for auto-fix support (currently indicates not implemented)
