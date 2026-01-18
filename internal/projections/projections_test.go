@@ -69,7 +69,7 @@ func TestNativeProjection_NodeProjections(t *testing.T) {
 
 func TestNativeProjection_RelationshipProjections(t *testing.T) {
 	p := &NativeProjection{
-		BaseProjection: BaseProjection{Name: "test"},
+		BaseProjection:    BaseProjection{Name: "test"},
 		RelationshipTypes: []string{"KNOWS", "WORKS_AT"},
 	}
 

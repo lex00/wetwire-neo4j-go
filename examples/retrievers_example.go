@@ -7,7 +7,7 @@ import (
 // VectorRetrieverExample demonstrates basic vector similarity search.
 // Reference: https://github.com/neo4j/neo4j-graphrag-python
 var VectorRetrieverExample = &retrievers.VectorRetriever{
-	IndexName: "document_embedding_vector_idx",
+	IndexName:        "document_embedding_vector_idx",
 	ReturnProperties: []string{"id", "content", "title"},
 	TopK:             10,
 	EmbedderConfig: &retrievers.EmbedderConfig{

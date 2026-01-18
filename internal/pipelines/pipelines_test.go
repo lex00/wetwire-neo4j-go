@@ -101,9 +101,9 @@ func TestFeatureSteps(t *testing.T) {
 
 func TestModels(t *testing.T) {
 	tests := []struct {
-		model      Model
-		modelType  string
-		pipelines  []PipelineType
+		model     Model
+		modelType string
+		pipelines []PipelineType
 	}{
 		{
 			&LogisticRegression{},

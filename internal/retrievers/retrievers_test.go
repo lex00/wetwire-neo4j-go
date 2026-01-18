@@ -10,9 +10,9 @@ func TestVectorRetriever_Interface(t *testing.T) {
 		BaseRetriever: BaseRetriever{
 			Name: "my_vector_retriever",
 		},
-		IndexName:       "document_embeddings",
-		EmbedderModel:   "text-embedding-3-small",
-		TopK:            10,
+		IndexName:        "document_embeddings",
+		EmbedderModel:    "text-embedding-3-small",
+		TopK:             10,
 		ReturnProperties: []string{"text", "title"},
 	}
 
@@ -116,9 +116,9 @@ func TestPineconeRetriever_Interface(t *testing.T) {
 		BaseRetriever: BaseRetriever{
 			Name: "pinecone_retriever",
 		},
-		PineconeAPIKey:   "api-key",
-		PineconeHost:     "https://my-index.pinecone.io",
-		IndexName:        "my-index",
+		PineconeAPIKey: "api-key",
+		PineconeHost:   "https://my-index.pinecone.io",
+		IndexName:      "my-index",
 	}
 
 	if r.RetrieverType() != Pinecone {

@@ -61,10 +61,10 @@ type LintOptions struct {
 
 // Linter validates Neo4j GDS configurations.
 type Linter struct {
-	pascalCaseRegex       *regexp.Regexp
-	screamingRegex        *regexp.Regexp
-	maxInlineProperties   int
-	maxNestingDepth       int
+	pascalCaseRegex     *regexp.Regexp
+	screamingRegex      *regexp.Regexp
+	maxInlineProperties int
+	maxNestingDepth     int
 }
 
 // NewLinter creates a new linter with default settings.
@@ -73,8 +73,8 @@ func NewLinter() *Linter {
 		// PascalCase: starts with uppercase, followed by letters/digits, must have at least one lowercase
 		pascalCaseRegex:     regexp.MustCompile(`^[A-Z][a-zA-Z0-9]*[a-z][a-zA-Z0-9]*$|^[A-Z][a-z][a-zA-Z0-9]*$`),
 		screamingRegex:      regexp.MustCompile(`^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$`),
-		maxInlineProperties: 5,  // WN4011: warn if more than 5 inline properties
-		maxNestingDepth:     3,  // WN4012: max nesting depth for schema definitions
+		maxInlineProperties: 5, // WN4011: warn if more than 5 inline properties
+		maxNestingDepth:     3, // WN4012: max nesting depth for schema definitions
 	}
 }
 

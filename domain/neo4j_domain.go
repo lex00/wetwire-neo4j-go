@@ -587,12 +587,12 @@ func matchesTypeAlias(kind, requestedType string) bool {
 	typeLower := requestedType
 
 	plurals := map[string]string{
-		"NodeType":           "nodetypes",
-		"RelationshipType":   "relationshiptypes",
-		"Algorithm":          "algorithms",
-		"Pipeline":           "pipelines",
-		"Retriever":          "retrievers",
-		"Schema":             "schemas",
+		"NodeType":         "nodetypes",
+		"RelationshipType": "relationshiptypes",
+		"Algorithm":        "algorithms",
+		"Pipeline":         "pipelines",
+		"Retriever":        "retrievers",
+		"Schema":           "schemas",
 	}
 
 	if plural, ok := plurals[kindLower]; ok && plural == typeLower {

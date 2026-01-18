@@ -594,12 +594,12 @@ func TestGenerator_NameCollisionHandling(t *testing.T) {
 
 	result := &ImportResult{
 		NodeTypes: []NodeTypeDefinition{
-			{Label: "WORKS_FOR"},  // becomes worksFor
-			{Label: "Person"},     // becomes person
+			{Label: "WORKS_FOR"}, // becomes worksFor
+			{Label: "Person"},    // becomes person
 		},
 		RelationshipTypes: []RelationshipTypeDefinition{
-			{Type: "WORKS_FOR"},   // would be worksFor, should become worksForRel
-			{Type: "PERSON"},      // would be person, should become personRel
+			{Type: "WORKS_FOR"}, // would be worksFor, should become worksForRel
+			{Type: "PERSON"},    // would be person, should become personRel
 		},
 	}
 
