@@ -277,12 +277,56 @@ func (l *neo4jLinter) Lint(ctx *Context, path string, opts LintOpts) (*Result, e
 		return nil, fmt.Errorf("discovery failed: %w", err)
 	}
 
+	// Build lint options from LintOpts
+	lintOpts := lint.LintOptions{
+		DisabledRules: opts.Disable,
+		Fix:           opts.Fix,
+	}
+
 	// Run lint on all resources
+	linter := lint.NewLinter()
 	var allResults []lint.LintResult
 
-	for range resources {
-		// For now, we'll skip per-resource linting since it requires the actual objects
-		// This would need to be enhanced with proper resource loading
+	// Convert discovered resources to lintable objects
+	for _, r := range resources {
+		// For schema types, we need to lint the discovered resources
+		// Create synthetic types based on discovered metadata
+		switch r.Kind {
+		case discover.KindNodeType:
+			node := &discover.LintableNodeType{
+				Label:      r.Name,
+				Properties: r.Properties,
+			}
+			// Lint using the discovered node type
+			nodeResults := linter.LintNodeType(node.ToSchemaNodeType())
+			allResults = append(allResults, nodeResults...)
+		case discover.KindRelationshipType:
+			rel := &discover.LintableRelationshipType{
+				Label:      r.Name,
+				Source:     r.Source,
+				Target:     r.Target,
+				Properties: r.Properties,
+			}
+			// Lint using the discovered relationship type
+			relResults := linter.LintRelationshipType(rel.ToSchemaRelationshipType())
+			allResults = append(allResults, relResults...)
+		}
+	}
+
+	// Filter out disabled rules
+	if len(lintOpts.DisabledRules) > 0 {
+		disabled := make(map[string]bool)
+		for _, rule := range lintOpts.DisabledRules {
+			disabled[rule] = true
+		}
+
+		var filtered []lint.LintResult
+		for _, r := range allResults {
+			if !disabled[r.Rule] {
+				filtered = append(filtered, r)
+			}
+		}
+		allResults = filtered
 	}
 
 	if len(allResults) == 0 {
@@ -300,6 +344,10 @@ func (l *neo4jLinter) Lint(ctx *Context, path string, opts LintOpts) (*Result, e
 		})
 	}
 
+	// If Fix mode is enabled, add a note about auto-fixing
+	if opts.Fix {
+		return NewErrorResultMultiple("lint issues found (auto-fix not yet implemented for these issues)", errs), nil
+	}
 	return NewErrorResultMultiple("lint issues found", errs), nil
 }
 
@@ -365,12 +413,12 @@ var Person = schema.NodeType{
 	Properties: []schema.Property{
 		{
 			Name:     "name",
-			Type:     schema.StringType,
+			Type:     schema.STRING,
 			Required: true,
 		},
 		{
 			Name:     "email",
-			Type:     schema.StringType,
+			Type:     schema.STRING,
 			Unique:   true,
 		},
 	},
@@ -392,7 +440,7 @@ var Knows = schema.RelationshipType{
 	Properties: []schema.Property{
 		{
 			Name: "since",
-			Type: schema.DateType,
+			Type: schema.DATE,
 		},
 	},
 }
@@ -428,17 +476,17 @@ var Person = schema.NodeType{
 	Properties: []schema.Property{
 		{
 			Name:     "name",
-			Type:     schema.StringType,
+			Type:     schema.STRING,
 			Required: true,
 		},
 		{
 			Name:     "email",
-			Type:     schema.StringType,
+			Type:     schema.STRING,
 			Unique:   true,
 		},
 		{
 			Name: "age",
-			Type: schema.IntType,
+			Type: schema.INTEGER,
 		},
 	},
 	Constraints: []schema.Constraint{
@@ -466,7 +514,7 @@ var Knows = schema.RelationshipType{
 	Properties: []schema.Property{
 		{
 			Name: "since",
-			Type: schema.DateType,
+			Type: schema.DATE,
 		},
 	},
 }

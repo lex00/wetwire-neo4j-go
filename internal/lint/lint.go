@@ -51,6 +51,14 @@ type LintResult struct {
 	Location string
 }
 
+// LintOptions configures the linter behavior.
+type LintOptions struct {
+	// DisabledRules specifies rule IDs to skip (e.g., "WN4001", "WN4052").
+	DisabledRules []string
+	// Fix automatically fixes fixable issues (reserved for future use).
+	Fix bool
+}
+
 // Linter validates Neo4j GDS configurations.
 type Linter struct {
 	pascalCaseRegex       *regexp.Regexp
@@ -439,6 +447,11 @@ func (l *Linter) lintRelationshipTypeWithDepth(rel *schema.RelationshipType, dep
 
 // LintAll validates multiple resources and returns all results.
 func (l *Linter) LintAll(resources []any) []LintResult {
+	return l.LintAllWithOptions(resources, LintOptions{})
+}
+
+// LintAllWithOptions validates multiple resources with configurable options.
+func (l *Linter) LintAllWithOptions(resources []any, opts LintOptions) []LintResult {
 	var results []LintResult
 
 	for _, r := range resources {
@@ -454,6 +467,22 @@ func (l *Linter) LintAll(resources []any) []LintResult {
 		case *schema.RelationshipType:
 			results = append(results, l.LintRelationshipType(v)...)
 		}
+	}
+
+	// Filter out disabled rules
+	if len(opts.DisabledRules) > 0 {
+		disabled := make(map[string]bool)
+		for _, rule := range opts.DisabledRules {
+			disabled[rule] = true
+		}
+
+		var filtered []LintResult
+		for _, r := range results {
+			if !disabled[r.Rule] {
+				filtered = append(filtered, r)
+			}
+		}
+		return filtered
 	}
 
 	return results

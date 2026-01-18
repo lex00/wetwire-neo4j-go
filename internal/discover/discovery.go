@@ -24,6 +24,7 @@ import (
 
 	coreast "github.com/lex00/wetwire-core-go/ast"
 	corediscover "github.com/lex00/wetwire-core-go/discover"
+	"github.com/lex00/wetwire-neo4j-go/pkg/neo4j/schema"
 )
 
 // ResourceKind represents the type of discovered resource.
@@ -765,6 +766,83 @@ func isValidIdentifier(name string) bool {
 		}
 	}
 	return true
+}
+
+// LintableNodeType is a wrapper that converts DiscoveredResource to schema.NodeType for linting.
+type LintableNodeType struct {
+	Label      string
+	Properties []PropertyInfo
+}
+
+// ToSchemaNodeType converts to a schema.NodeType suitable for linting.
+func (l *LintableNodeType) ToSchemaNodeType() *schema.NodeType {
+	// Import schema package - we need to add this import
+	props := make([]schema.Property, len(l.Properties))
+	for i, p := range l.Properties {
+		props[i] = schema.Property{
+			Name:     p.Name,
+			Type:     stringToPropertyType(p.Type),
+			Required: p.Required,
+		}
+	}
+	return &schema.NodeType{
+		Label:      l.Label,
+		Properties: props,
+	}
+}
+
+// LintableRelationshipType is a wrapper that converts DiscoveredResource to schema.RelationshipType for linting.
+type LintableRelationshipType struct {
+	Label      string
+	Source     string
+	Target     string
+	Properties []PropertyInfo
+}
+
+// ToSchemaRelationshipType converts to a schema.RelationshipType suitable for linting.
+func (l *LintableRelationshipType) ToSchemaRelationshipType() *schema.RelationshipType {
+	props := make([]schema.Property, len(l.Properties))
+	for i, p := range l.Properties {
+		props[i] = schema.Property{
+			Name:     p.Name,
+			Type:     stringToPropertyType(p.Type),
+			Required: p.Required,
+		}
+	}
+	return &schema.RelationshipType{
+		Label:      l.Label,
+		Source:     l.Source,
+		Target:     l.Target,
+		Properties: props,
+	}
+}
+
+// stringToPropertyType converts a string type name to a PropertyType constant.
+func stringToPropertyType(s string) schema.PropertyType {
+	switch s {
+	case "StringType", "STRING":
+		return schema.STRING
+	case "IntType", "INTEGER", "INT":
+		return schema.INTEGER
+	case "FloatType", "FLOAT":
+		return schema.FLOAT
+	case "BoolType", "BOOLEAN", "BOOL":
+		return schema.BOOLEAN
+	case "DateType", "DATE":
+		return schema.DATE
+	case "DateTimeType", "DATETIME":
+		return schema.DATETIME
+	case "PointType", "POINT":
+		return schema.POINT
+	case "ListStringType", "LIST_STRING":
+		return schema.LIST_STRING
+	case "ListIntType", "LIST_INT", "LIST_INTEGER":
+		return schema.LIST_INTEGER
+	case "ListFloatType", "LIST_FLOAT":
+		return schema.LIST_FLOAT
+	default:
+		return schema.STRING // Default to string
+	}
 }
 
 // DependencyGraph represents dependencies between resources.

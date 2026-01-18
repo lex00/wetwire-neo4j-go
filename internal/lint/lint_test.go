@@ -170,3 +170,75 @@ func containsRule(results []LintResult, rule string) bool {
 	}
 	return false
 }
+
+// TestLinter_DisabledRules tests that disabled rules are properly skipped
+func TestLinter_DisabledRules(t *testing.T) {
+	l := NewLinter()
+
+	// Create a PageRank with invalid damping factor (triggers WN4001)
+	algo := &algorithms.PageRank{DampingFactor: 1.5}
+
+	// Run lint without disabling any rules
+	results := l.LintAlgorithm(algo)
+	if !containsRule(results, "WN4001") {
+		t.Error("expected WN4001 to be present when not disabled")
+	}
+
+	// Now test with DisabledRules - use LintAllWithOptions
+	resultsFiltered := l.LintAllWithOptions([]any{algo}, LintOptions{
+		DisabledRules: []string{"WN4001"},
+	})
+	if containsRule(resultsFiltered, "WN4001") {
+		t.Error("WN4001 should be filtered out when disabled")
+	}
+}
+
+// TestLinter_DisabledRules_Multiple tests disabling multiple rules
+func TestLinter_DisabledRules_Multiple(t *testing.T) {
+	l := NewLinter()
+
+	// Create a node with lowercase label (triggers WN4052)
+	node := &schema.NodeType{Label: "person"} // lowercase - violates WN4052
+
+	// Create a PageRank with invalid damping factor (triggers WN4001)
+	algo := &algorithms.PageRank{DampingFactor: 1.5}
+
+	// Run lint without disabling
+	results := l.LintAll([]any{algo, node})
+	hasWN4001 := containsRule(results, "WN4001")
+	hasWN4052 := containsRule(results, "WN4052")
+
+	if !hasWN4001 {
+		t.Error("expected WN4001 to be present")
+	}
+	if !hasWN4052 {
+		t.Error("expected WN4052 to be present")
+	}
+
+	// Disable both rules
+	filteredResults := l.LintAllWithOptions([]any{algo, node}, LintOptions{
+		DisabledRules: []string{"WN4001", "WN4052"},
+	})
+
+	if containsRule(filteredResults, "WN4001") {
+		t.Error("WN4001 should be filtered out")
+	}
+	if containsRule(filteredResults, "WN4052") {
+		t.Error("WN4052 should be filtered out")
+	}
+}
+
+// TestLintOptions_Fields tests that LintOptions struct has all expected fields
+func TestLintOptions_Fields(t *testing.T) {
+	opts := LintOptions{
+		DisabledRules: []string{"WN4001", "WN4052"},
+		Fix:           true,
+	}
+
+	if len(opts.DisabledRules) != 2 {
+		t.Errorf("expected 2 disabled rules, got %d", len(opts.DisabledRules))
+	}
+	if !opts.Fix {
+		t.Error("expected Fix to be true")
+	}
+}
