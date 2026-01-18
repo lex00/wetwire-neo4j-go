@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Split `internal/discover/discovery.go` for maintainability (#112)
+  - `discovery.go` (975 lines) split into focused files:
+    - `discovery.go` - Type definitions, Scanner struct, core scanning logic (~383 lines)
+    - `discovery_helpers.go` - Field extraction helpers, AST walking utilities, DependencyGraph (~605 lines)
+  - No functionality changes, just code organization
+
 - Split large lint test file for maintainability
   - `lint_test.go` (830 lines) split into focused files:
     - `lint_test.go` - Basic tests, utilities, configuration (~170 lines)
