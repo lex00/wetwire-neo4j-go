@@ -1,0 +1,28 @@
+name: knowledge_graph_scenario
+description: Generate Neo4j knowledge graph resources for document processing
+
+model: sonnet
+timeout: 120s
+
+prompts:
+  default: prompts/intermediate.md
+  variants:
+    beginner: prompts/beginner.md
+    intermediate: prompts/intermediate.md
+    expert: prompts/expert.md
+
+domains:
+  - name: neo4j
+    outputs:
+      - "expected/**/*.go"
+
+validation:
+  neo4j:
+    resources:
+      min: 5
+    node_types:
+      min: 3
+    relationship_types:
+      min: 2
+    algorithms:
+      min: 1
