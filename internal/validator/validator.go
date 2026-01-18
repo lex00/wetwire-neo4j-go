@@ -61,10 +61,10 @@ type ValidationResult struct {
 
 // Validator validates Neo4j configurations against a live instance.
 type Validator struct {
-	driver   neo4j.DriverWithContext
-	config   Config
-	gdsInfo  *GDSInfo
-	dbInfo   *DatabaseInfo
+	driver  neo4j.DriverWithContext
+	config  Config
+	gdsInfo *GDSInfo
+	dbInfo  *DatabaseInfo
 }
 
 // GDSInfo contains information about the GDS installation.

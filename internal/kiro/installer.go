@@ -26,7 +26,6 @@ type mcpServer struct {
 	Cwd     string   `json:"cwd,omitempty"`
 }
 
-
 // EnsureInstalled installs the Kiro agent configuration if not already present.
 func EnsureInstalled() error {
 	return EnsureInstalledWithForce(false)

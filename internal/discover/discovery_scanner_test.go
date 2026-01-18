@@ -488,4 +488,3 @@ type IndexedNodes struct {
 		t.Fatalf("expected 1 resource, got %d", len(resources))
 	}
 }
-

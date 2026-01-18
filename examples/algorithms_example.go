@@ -23,8 +23,8 @@ var ArticleRankExample = &algorithms.ArticleRank{
 		GraphName: "citation-network",
 		Mode:      algorithms.Mutate,
 	},
-	DampingFactor: 0.85,
-	MaxIterations: 20,
+	DampingFactor:  0.85,
+	MaxIterations:  20,
 	MutateProperty: "articleRank",
 }
 
@@ -45,11 +45,11 @@ var LouvainExample = &algorithms.Louvain{
 		GraphName: "social-network",
 		Mode:      algorithms.Mutate,
 	},
-	MaxLevels:            10,
-	MaxIterations:        10,
-	Tolerance:            0.0001,
+	MaxLevels:                      10,
+	MaxIterations:                  10,
+	Tolerance:                      0.0001,
 	IncludeIntermediateCommunities: true,
-	MutateProperty:       "communityId",
+	MutateProperty:                 "communityId",
 }
 
 // LeidenExample demonstrates the Leiden community detection algorithm.
@@ -59,9 +59,9 @@ var LeidenExample = &algorithms.Leiden{
 		GraphName: "social-network",
 		Mode:      algorithms.Stream,
 	},
-	MaxLevels:     10,
-	Gamma:         1.0,
-	Theta:         0.01,
+	MaxLevels: 10,
+	Gamma:     1.0,
+	Theta:     0.01,
 }
 
 // WCCExample demonstrates Weakly Connected Components.
@@ -81,10 +81,10 @@ var FastRPExample = &algorithms.FastRP{
 		GraphName: "graph",
 		Mode:      algorithms.Mutate,
 	},
-	EmbeddingDimension:  128,
-	IterationWeights:    []float64{0.0, 1.0, 1.0, 0.8, 0.5},
+	EmbeddingDimension:    128,
+	IterationWeights:      []float64{0.0, 1.0, 1.0, 0.8, 0.5},
 	NormalizationStrength: 0.5,
-	MutateProperty:      "embedding",
+	MutateProperty:        "embedding",
 }
 
 // Node2VecExample demonstrates the Node2Vec embedding algorithm.
@@ -136,8 +136,8 @@ var DijkstraExample = &algorithms.Dijkstra{
 		GraphName: "road-network",
 		Mode:      algorithms.Stream,
 	},
-	SourceNode:         0,
-	TargetNode:         100,
+	SourceNode:                 0,
+	TargetNode:                 100,
 	RelationshipWeightProperty: "distance",
 }
 

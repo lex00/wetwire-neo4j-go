@@ -354,10 +354,10 @@ func TestValidationResult_Details(t *testing.T) {
 		Valid:   true,
 		Message: "test message",
 		Details: map[string]any{
-			"exists":      true,
-			"count":       42,
-			"name":        "test",
-			"nested":      map[string]any{"key": "value"},
+			"exists": true,
+			"count":  42,
+			"name":   "test",
+			"nested": map[string]any{"key": "value"},
 		},
 	}
 

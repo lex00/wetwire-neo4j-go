@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Imported Neo4j examples in `examples/imported/` (#114)
+  - **Fraud Detection** (`neo4j-aura/fraud_detection.go`): Financial fraud detection pattern
+    - Customer, Account, Transaction nodes with shared identifier tracking
+    - Email, Phone, IPAddress, Device nodes for fraud ring detection
+    - WCC, Node Similarity, PageRank, and Louvain algorithms
+    - Sources: Neo4j Aura fraud demos and GDS documentation
+  - **Recommendation Engine** (`neo4j-gds/recommendation_engine.go`): Product recommendation system
+    - User-Product interaction graph with ratings, purchases, views
+    - Collaborative filtering with Node Similarity and KNN
+    - FastRP embeddings and PageRank popularity
+    - Link prediction and node classification ML pipelines
+    - Sources: Neo4j GDS recommendation tutorials
+  - **Knowledge Graph Q&A** (`neo4j-graphrag/knowledge_graph_qa.go`): GraphRAG for documents
+    - Document chunking with entity and concept extraction
+    - Vector, Hybrid, and Text2Cypher retrievers
+    - Multi-hop graph traversal for context enrichment
+    - LLM-based entity extraction pipeline
+    - Sources: Neo4j Labs GraphRAG tools and documentation
+  - Comprehensive README documenting sources and usage patterns
+
 - Knowledge graph scenario example in `examples/knowledge_graph_scenario/` (#115)
   - Demonstrates complete KG pipeline for academic paper processing
   - Includes schema definitions (Document, Person, Concept, Institution nodes)
@@ -17,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graph algorithms (PageRank for citations, Louvain for communities)
   - Three persona prompts (beginner, intermediate, expert)
   - Validation rules for minimum resource counts
-
 - Support for `LintOpts.Fix` and `LintOpts.Disable` in domain linter (#110)
   - `opts.Disable` skips specified lint rules by ID (e.g., `["WN4001", "WN4052"]`)
   - `opts.Fix` prepares for auto-fix support (currently indicates not implemented)
