@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `TestInstallConfig_UsesFullPath` test failure (#107)
+  - Use `os.Getenv("HOME")` instead of `os.UserHomeDir()` to respect environment variable overrides in tests
+  - Check `$HOME/go/bin` before `exec.LookPath()` to prioritize HOME-based binaries
+  - Ensures proper test isolation when using `t.Setenv("HOME", tmpHome)`
+
 ### Changed
 
 - Split large lint test file for maintainability

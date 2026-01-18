@@ -43,9 +43,15 @@ func EnsureInstalledWithForce(force bool) error {
 // This allows installing configurations with custom schema context.
 func InstallConfig(config corekiro.Config) error {
 	// Get kiro agents directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("get home dir: %w", err)
+	// Use os.Getenv("HOME") instead of os.UserHomeDir() to ensure
+	// we respect environment variable overrides in tests
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		var err error
+		homeDir, err = os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("get home dir: %w", err)
+		}
 	}
 	agentsDir := filepath.Join(homeDir, ".kiro", "agents")
 	if err := os.MkdirAll(agentsDir, 0755); err != nil {
@@ -53,15 +59,14 @@ func InstallConfig(config corekiro.Config) error {
 	}
 
 	// Find the full path to the MCP command
+	// Check $HOME/go/bin first (respects HOME override in tests)
 	mcpCommand := config.MCPCommand
-	if fullPath, err := exec.LookPath(config.MCPCommand); err == nil {
+	goPath := filepath.Join(homeDir, "go", "bin", config.MCPCommand)
+	if _, err := os.Stat(goPath); err == nil {
+		mcpCommand = goPath
+	} else if fullPath, err := exec.LookPath(config.MCPCommand); err == nil {
+		// Fall back to PATH lookup
 		mcpCommand = fullPath
-	} else {
-		// Try common Go binary locations
-		goPath := filepath.Join(homeDir, "go", "bin", config.MCPCommand)
-		if _, err := os.Stat(goPath); err == nil {
-			mcpCommand = goPath
-		}
 	}
 
 	// Build agent config with correct field names
