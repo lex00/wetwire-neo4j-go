@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for `LintOpts.Fix` and `LintOpts.Disable` in domain linter (#110)
+  - `opts.Disable` skips specified lint rules by ID (e.g., `["WN4001", "WN4052"]`)
+  - `opts.Fix` prepares for auto-fix support (currently indicates not implemented)
+  - Added `LintOptions` struct and `LintAllWithOptions` method to `internal/lint`
+  - Added `LintableNodeType` and `LintableRelationshipType` helpers in `internal/discover`
+
 ### Fixed
 
 - Fixed `TestInstallConfig_UsesFullPath` test failure (#107)
