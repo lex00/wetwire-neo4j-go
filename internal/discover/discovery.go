@@ -19,11 +19,11 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	coreast "github.com/lex00/wetwire-core-go/ast"
+	corediscover "github.com/lex00/wetwire-core-go/discover"
 )
 
 // ResourceKind represents the type of discovered resource.
@@ -100,52 +100,81 @@ type Scanner struct {
 	typeAliases map[string]ResourceKind
 }
 
+// neo4jTypeAliases maps type names to their resource kinds.
+// This is used by both the Scanner and the TypeMatcher.
+var neo4jTypeAliases = map[string]ResourceKind{
+	// Schema types
+	"Schema":           KindSchema,
+	"NodeType":         KindNodeType,
+	"RelationshipType": KindRelationshipType,
+	// Algorithm types
+	"PageRank":         KindAlgorithm,
+	"Louvain":          KindAlgorithm,
+	"Leiden":           KindAlgorithm,
+	"LabelPropagation": KindAlgorithm,
+	"WCC":              KindAlgorithm,
+	"Betweenness":      KindAlgorithm,
+	"Closeness":        KindAlgorithm,
+	"Degree":           KindAlgorithm,
+	"ArticleRank":      KindAlgorithm,
+	"KCore":            KindAlgorithm,
+	"TriangleCount":    KindAlgorithm,
+	"NodeSimilarity":   KindAlgorithm,
+	"KNN":              KindAlgorithm,
+	"Dijkstra":         KindAlgorithm,
+	"AStar":            KindAlgorithm,
+	"BellmanFord":      KindAlgorithm,
+	"BFS":              KindAlgorithm,
+	"DFS":              KindAlgorithm,
+	"FastRP":           KindAlgorithm,
+	"GraphSAGE":        KindAlgorithm,
+	"Node2Vec":         KindAlgorithm,
+	"HashGNN":          KindAlgorithm,
+	// Pipeline types
+	"NodeClassificationPipeline": KindPipeline,
+	"LinkPredictionPipeline":     KindPipeline,
+	"NodeRegressionPipeline":     KindPipeline,
+	// Retriever types
+	"VectorRetriever":        KindRetriever,
+	"VectorCypherRetriever":  KindRetriever,
+	"HybridRetriever":        KindRetriever,
+	"HybridCypherRetriever":  KindRetriever,
+	"Text2CypherRetriever":   KindRetriever,
+	"WeaviateNeo4jRetriever": KindRetriever,
+	"PineconeNeo4jRetriever": KindRetriever,
+	"QdrantNeo4jRetriever":   KindRetriever,
+}
+
+// Neo4jTypeMatcher returns a corediscover.TypeMatcher for Neo4j resource types.
+// This can be used with the core discover infrastructure for basic discovery.
+// For rich Neo4j metadata (properties, constraints, etc.), use the Scanner instead.
+func Neo4jTypeMatcher() corediscover.TypeMatcher {
+	return func(pkgName, typeName string, imports map[string]string) (string, bool) {
+		// Check if the type is a known Neo4j resource type
+		if kind, ok := neo4jTypeAliases[typeName]; ok {
+			// Verify it comes from a Neo4j-related package if package is specified
+			if pkgName != "" {
+				importPath := imports[pkgName]
+				// Accept types from any Neo4j-related package or local definitions
+				if !strings.Contains(importPath, "neo4j") &&
+					!strings.Contains(importPath, "schema") &&
+					!strings.Contains(importPath, "algorithms") &&
+					!strings.Contains(importPath, "pipelines") &&
+					!strings.Contains(importPath, "retrievers") {
+					return "", false
+				}
+			}
+			return string(kind), true
+		}
+		return "", false
+	}
+}
+
 // NewScanner creates a new resource scanner.
 func NewScanner() *Scanner {
 	return &Scanner{
-		fset: token.NewFileSet(),
-		typeAliases: map[string]ResourceKind{
-			// Schema types
-			"Schema":           KindSchema,
-			"NodeType":         KindNodeType,
-			"RelationshipType": KindRelationshipType,
-			// Algorithm types (to be added)
-			"PageRank":         KindAlgorithm,
-			"Louvain":          KindAlgorithm,
-			"Leiden":           KindAlgorithm,
-			"LabelPropagation": KindAlgorithm,
-			"WCC":              KindAlgorithm,
-			"Betweenness":      KindAlgorithm,
-			"Closeness":        KindAlgorithm,
-			"Degree":           KindAlgorithm,
-			"ArticleRank":      KindAlgorithm,
-			"KCore":            KindAlgorithm,
-			"TriangleCount":    KindAlgorithm,
-			"NodeSimilarity":   KindAlgorithm,
-			"KNN":              KindAlgorithm,
-			"Dijkstra":         KindAlgorithm,
-			"AStar":            KindAlgorithm,
-			"BellmanFord":      KindAlgorithm,
-			"BFS":              KindAlgorithm,
-			"DFS":              KindAlgorithm,
-			"FastRP":           KindAlgorithm,
-			"GraphSAGE":        KindAlgorithm,
-			"Node2Vec":         KindAlgorithm,
-			"HashGNN":          KindAlgorithm,
-			// Pipeline types
-			"NodeClassificationPipeline": KindPipeline,
-			"LinkPredictionPipeline":     KindPipeline,
-			"NodeRegressionPipeline":     KindPipeline,
-			// Retriever types
-			"VectorRetriever":        KindRetriever,
-			"VectorCypherRetriever":  KindRetriever,
-			"HybridRetriever":        KindRetriever,
-			"HybridCypherRetriever":  KindRetriever,
-			"Text2CypherRetriever":   KindRetriever,
-			"WeaviateNeo4jRetriever": KindRetriever,
-			"PineconeNeo4jRetriever": KindRetriever,
-			"QdrantNeo4jRetriever":   KindRetriever,
-		},
+		fset:        token.NewFileSet(),
+		typeAliases: neo4jTypeAliases,
 	}
 }
 
@@ -290,29 +319,18 @@ func (s *Scanner) ScanFile(filename string) ([]DiscoveredResource, error) {
 }
 
 // ScanDir scans a directory (recursively) for resource definitions.
+// Uses corediscover.WalkDir for directory traversal with standard skip patterns.
 func (s *Scanner) ScanDir(dir string) ([]DiscoveredResource, error) {
 	var resources []DiscoveredResource
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	walkOpts := corediscover.WalkOptions{
+		SkipTests:    true,
+		SkipVendor:   true,
+		SkipHidden:   true,
+		SkipTestdata: true,
+	}
 
-		// Skip directories
-		if info.IsDir() {
-			// Skip hidden directories and vendor (but not "." or "..")
-			name := info.Name()
-			if (strings.HasPrefix(name, ".") && name != "." && name != "..") || name == "vendor" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		// Only process .go files (skip test files)
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-
+	err := corediscover.WalkDir(dir, walkOpts, func(path string) error {
 		fileResources, err := s.ScanFile(path)
 		if err != nil {
 			// Print parse errors to stderr so users can debug
