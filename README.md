@@ -9,7 +9,7 @@ Type-safe Neo4j schema definitions for AI-assisted Cypher generation.
 
 ## Overview
 
-wetwire-neo4j-go lets you define your Neo4j schema in type-safe Go, then use AI agents (Claude, Kiro, etc.) to generate correct Cypher queries. The Go schema acts as a validated contract that agents can read to understand your database structure.
+wetwire-neo4j-go lets you define your Neo4j schema in type-safe Go, then use AI agents (Claude) to generate correct Cypher queries. The Go schema acts as a validated contract that agents can read to understand your database structure.
 
 ```
 Define Schema (Go) → Validate (lint) → Agent Reads Schema → Generates Correct Cypher
@@ -249,9 +249,6 @@ See [docs/CLI.md](docs/CLI.md) for detailed command reference.
 - [CLI Reference](docs/CLI.md) - All commands
 - [Lint Rules](docs/LINT_RULES.md) - WN4 rule reference
 
-**Advanced:**
-- [Kiro Integration](docs/NEO4J-KIRO-CLI.md) - AI-assisted schema design
-
 ## Examples
 
 The `examples/` directory contains comprehensive examples:
@@ -337,14 +334,12 @@ The MCP server (`wetwire-neo4j mcp`) exposes tools for AI agents:
 - `wetwire_build` - Generate Cypher and JSON configs
 - `wetwire_list` - List discovered resources with details
 
-See [docs/NEO4J-KIRO-CLI.md](docs/NEO4J-KIRO-CLI.md) for complete Kiro integration guide.
-
 ## Integration with wetwire-core-go
 
 wetwire-neo4j-go integrates with [wetwire-core-go](https://github.com/lex00/wetwire-core-go) for:
 
 - CLI infrastructure and command registration
-- MCP server integration for Claude Code and Kiro CLI
+- MCP server integration for Claude Code
 - Common lint rule framework
 
 ## References
