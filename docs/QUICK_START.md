@@ -254,6 +254,17 @@ If you have Neo4j running:
 wetwire-neo4j validate ./schema/ --uri bolt://localhost:7687 --password your-password
 ```
 
+## AI-Assisted Design
+
+Let AI help create your Neo4j schema:
+
+```bash
+# No API key required - uses Claude CLI
+wetwire-neo4j design "Create a schema for a social network with users, posts, and comments"
+```
+
+The design command automatically discovers your existing schema and extends it with new definitions.
+
 ## Next Steps
 
 - See `examples/` for more comprehensive examples

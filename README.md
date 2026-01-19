@@ -285,15 +285,14 @@ wetwire-neo4j-go/
 
 ## AI-Assisted Schema Design
 
-The `design` command provides AI-assisted schema generation with automatic schema awareness:
+Use the `design` command for interactive, AI-assisted schema creation:
 
 ```bash
-# Start an AI design session (Anthropic API)
+# No API key required - uses Claude CLI
 wetwire-neo4j design "Create a social network schema"
-
-# Or use Kiro CLI
-wetwire-neo4j design --provider kiro "Add audit logging to my schema"
 ```
+
+Uses [Claude CLI](https://claude.ai/download) by default (no API key required). Falls back to Anthropic API if Claude CLI is not installed.
 
 ### Pre-flight Schema Discovery
 
