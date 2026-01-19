@@ -239,19 +239,18 @@ After importing, you can add relationship definitions, cardinality, and GoDoc co
 
 See [docs/CLI.md](docs/CLI.md) for detailed command reference.
 
-## Lint Rules
+## Documentation
 
-wetwire-neo4j-go includes lint rules to catch common configuration issues:
+**Getting Started:**
+- [Quick Start](docs/QUICK_START.md) - 5-minute tutorial
+- [FAQ](docs/FAQ.md) - Common questions
 
-| Rule | Description |
-|------|-------------|
-| WN4001 | Damping factor must be in [0, 1) |
-| WN4002 | Max iterations must be positive |
-| WN4006 | Embedding dimension should be power of 2 |
-| WN4052 | Node labels should use PascalCase |
-| WN4053 | Relationship types should use SCREAMING_SNAKE_CASE |
+**Reference:**
+- [CLI Reference](docs/CLI.md) - All commands
+- [Lint Rules](docs/LINT_RULES.md) - WN4 rule reference
 
-See [docs/LINT_RULES.md](docs/LINT_RULES.md) for complete rule documentation.
+**Advanced:**
+- [Kiro Integration](docs/NEO4J-KIRO-CLI.md) - AI-assisted schema design
 
 ## Examples
 

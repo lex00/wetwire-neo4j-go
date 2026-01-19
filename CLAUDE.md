@@ -109,22 +109,9 @@ var SocialGraph = &projections.NativeProjection{
 | Property Names | camelCase or snake_case | `firstName`, `created_at` |
 | Variable Names | camelCase | `person`, `worksFor` |
 
-## Lint Rules (WN4xxx)
+## Lint Rules
 
-| Range | Category |
-|-------|----------|
-| WN4001-WN4029 | GDS Algorithm Rules |
-| WN4030-WN4039 | ML Pipeline Rules |
-| WN4040-WN4049 | GraphRAG Rules |
-| WN4050-WN4059 | Schema Rules |
-| WN4060-WN4069 | Projection Rules |
-
-Key rules:
-- **WN4001**: dampingFactor must be in [0, 1)
-- **WN4002**: maxIterations must be positive
-- **WN4006**: embeddingDimension should be power of 2
-- **WN4052**: node labels should be PascalCase
-- **WN4053**: relationship types should be SCREAMING_SNAKE_CASE
+Uses the `WN4` prefix (Wetwire Neo4j). See [docs/LINT_RULES.md](docs/LINT_RULES.md) for the complete rule reference.
 
 ## CLI Commands
 
