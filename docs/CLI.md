@@ -4,9 +4,7 @@ wetwire-neo4j-go provides a command-line interface for building, linting, and ma
 
 ## Installation
 
-```bash
-go install github.com/lex00/wetwire-neo4j-go/cmd/wetwire-neo4j@latest
-```
+See [README.md](../README.md#installation) for installation instructions.
 
 ## Commands
 
