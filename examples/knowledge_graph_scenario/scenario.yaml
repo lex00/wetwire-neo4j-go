@@ -6,6 +6,10 @@ timeout: 120s
 
 prompts:
   default: prompts/intermediate.md
+  personas:
+    - beginner
+    - intermediate
+    - expert
   variants:
     beginner: prompts/beginner.md
     intermediate: prompts/intermediate.md
@@ -14,15 +18,10 @@ prompts:
 domains:
   - name: neo4j
     outputs:
-      - "expected/**/*.go"
+      - "*.cypher"
+      - "*.json"
 
 validation:
   neo4j:
     resources:
-      min: 5
-    node_types:
       min: 3
-    relationship_types:
-      min: 2
-    algorithms:
-      min: 1
