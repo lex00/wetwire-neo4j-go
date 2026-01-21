@@ -169,6 +169,30 @@ golangci-lint run ./... # Run linter
 go build ./...          # Build all packages
 ```
 
+
+## Diff
+
+Compare Neo4j schema semantically:
+
+```bash
+# Compare two files
+wetwire-neo4j diff file1 file2
+
+# JSON output for CI/CD
+wetwire-neo4j diff file1 file2 -f json
+
+# Ignore array ordering differences
+wetwire-neo4j diff file1 file2 --ignore-order
+```
+
+The diff command performs semantic comparison by resource name, detecting:
+- Added resources
+- Removed resources
+- Modified resources (with property-level change details)
+- Breaking changes (removed constraints, type changes)
+
+Exit code is 1 if differences are found, enabling CI pipeline validation.
+
 ## MCP Integration
 
 wetwire-neo4j provides MCP (Model Context Protocol) integration:
