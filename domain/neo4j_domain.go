@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	coredomain "github.com/lex00/wetwire-core-go/domain"
+	"github.com/lex00/wetwire-neo4j-go/internal/differ"
 	"github.com/lex00/wetwire-neo4j-go/internal/discover"
 	"github.com/lex00/wetwire-neo4j-go/internal/lint"
 	"github.com/spf13/cobra"
@@ -45,6 +46,7 @@ var (
 	_ coredomain.Domain        = (*Neo4jDomain)(nil)
 	_ coredomain.ListerDomain  = (*Neo4jDomain)(nil)
 	_ coredomain.GrapherDomain = (*Neo4jDomain)(nil)
+	_ coredomain.DifferDomain  = (*Neo4jDomain)(nil)
 )
 
 // Name returns "neo4j"
@@ -85,6 +87,11 @@ func (d *Neo4jDomain) Lister() coredomain.Lister {
 // Grapher returns the Neo4j grapher implementation
 func (d *Neo4jDomain) Grapher() coredomain.Grapher {
 	return &neo4jGrapher{}
+}
+
+// Differ returns the Neo4j differ implementation
+func (d *Neo4jDomain) Differ() coredomain.Differ {
+	return differ.New()
 }
 
 // CreateRootCommand creates the root command using the domain interface.

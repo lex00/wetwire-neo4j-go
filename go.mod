@@ -25,3 +25,5 @@ require (
 // - mcp: MCP server implementation for tool registration and handling
 // - kiro: Kiro spec generation utilities
 // Future implementations should use these packages instead of custom solutions.
+
+replace github.com/lex00/wetwire-core-go => ../wetwire-core-go
