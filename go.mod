@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/lex00/wetwire-core-go v1.17.1
+	github.com/lex00/wetwire-core-go v1.20.0
 	github.com/neo4j/neo4j-go-driver/v5 v5.28.4
 	github.com/spf13/cobra v1.10.2
 )
@@ -25,5 +25,3 @@ require (
 // - mcp: MCP server implementation for tool registration and handling
 // - kiro: Kiro spec generation utilities
 // Future implementations should use these packages instead of custom solutions.
-
-replace github.com/lex00/wetwire-core-go => ../wetwire-core-go
