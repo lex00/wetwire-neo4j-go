@@ -24,9 +24,10 @@ jobs:
         run: go test -v -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: lex00/wetwire-neo4j-go
           files: coverage.out
           fail_ci_if_error: false
 
