@@ -29,3 +29,7 @@ Thumbs.db
 # Coverage
 coverage.out
 coverage.html
+
+# SVG recordings (allow mascot)
+*.svg
+!docs/wetwire.svg
