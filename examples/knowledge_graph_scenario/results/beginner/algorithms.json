@@ -1,0 +1,197 @@
+{
+  "algorithms": [
+    {
+      "name": "citation-pagerank",
+      "description": "Find influential papers using PageRank on citation network",
+      "algorithm": "pageRank",
+      "graphProjection": {
+        "nodeProjection": ["Document"],
+        "relationshipProjection": {
+          "CITES": {
+            "orientation": "NATURAL",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "dampingFactor": 0.85,
+        "maxIterations": 20,
+        "tolerance": 0.0000001
+      },
+      "writeProperty": "pagerank"
+    },
+    {
+      "name": "author-communities",
+      "description": "Detect research communities using Louvain algorithm on author collaboration network",
+      "algorithm": "louvain",
+      "graphProjection": {
+        "nodeProjection": ["Person"],
+        "relationshipProjection": {
+          "COLLABORATED_WITH": {
+            "orientation": "UNDIRECTED",
+            "aggregation": "COUNT"
+          }
+        }
+      },
+      "parameters": {
+        "maxLevels": 10,
+        "maxIterations": 10,
+        "tolerance": 0.0001,
+        "includeIntermediateCommunities": true
+      },
+      "writeProperty": "community"
+    },
+    {
+      "name": "concept-similarity",
+      "description": "Find similar research topics using Node Similarity on concept co-occurrence",
+      "algorithm": "nodeSimilarity",
+      "graphProjection": {
+        "nodeProjection": ["Concept"],
+        "relationshipProjection": {
+          "CO_OCCURS": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "similarityCutoff": 0.1,
+        "degreeCutoff": 1,
+        "topK": 10
+      },
+      "writeProperty": "similarity",
+      "writeRelationshipType": "SIMILAR_TO"
+    },
+    {
+      "name": "citation-betweenness",
+      "description": "Identify bridge papers in citation network using Betweenness Centrality",
+      "algorithm": "betweenness",
+      "graphProjection": {
+        "nodeProjection": ["Document"],
+        "relationshipProjection": {
+          "CITES": {
+            "orientation": "NATURAL"
+          }
+        }
+      },
+      "parameters": {
+        "samplingSize": 500,
+        "samplingSeed": 42
+      },
+      "writeProperty": "betweenness"
+    },
+    {
+      "name": "author-degree-centrality",
+      "description": "Find most connected authors using Degree Centrality",
+      "algorithm": "degree",
+      "graphProjection": {
+        "nodeProjection": ["Person"],
+        "relationshipProjection": {
+          "AUTHORED": {
+            "orientation": "NATURAL"
+          },
+          "COLLABORATED_WITH": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "relationshipWeightProperty": null
+      },
+      "writeProperty": "degree"
+    },
+    {
+      "name": "institution-collaboration-strength",
+      "description": "Measure collaboration strength between institutions",
+      "algorithm": "nodeSimilarity",
+      "graphProjection": {
+        "nodeProjection": ["Institution"],
+        "relationshipProjection": {
+          "COLLABORATES_WITH": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "similarityCutoff": 0.2,
+        "topK": 5
+      },
+      "writeProperty": "collaborationScore",
+      "writeRelationshipType": "STRONG_COLLABORATION"
+    },
+    {
+      "name": "weakly-connected-components",
+      "description": "Find disconnected subgraphs in citation network",
+      "algorithm": "wcc",
+      "graphProjection": {
+        "nodeProjection": ["Document"],
+        "relationshipProjection": {
+          "CITES": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "threshold": 0.0,
+        "consecutiveIds": false
+      },
+      "writeProperty": "componentId"
+    },
+    {
+      "name": "label-propagation-topics",
+      "description": "Cluster documents by topic using Label Propagation",
+      "algorithm": "labelPropagation",
+      "graphProjection": {
+        "nodeProjection": {
+          "Document": {
+            "properties": ["seedConcept"]
+          }
+        },
+        "relationshipProjection": {
+          "CITES": {
+            "orientation": "UNDIRECTED"
+          },
+          "SIMILAR_TO": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "maxIterations": 10,
+        "seedProperty": "seedConcept"
+      },
+      "writeProperty": "topicCluster"
+    },
+    {
+      "name": "triangle-count-collaboration",
+      "description": "Count collaboration triangles to measure research group cohesion",
+      "algorithm": "triangleCount",
+      "graphProjection": {
+        "nodeProjection": ["Person"],
+        "relationshipProjection": {
+          "COLLABORATED_WITH": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {},
+      "writeProperty": "triangles"
+    },
+    {
+      "name": "local-clustering-coefficient",
+      "description": "Measure how tightly authors cluster with their collaborators",
+      "algorithm": "localClusteringCoefficient",
+      "graphProjection": {
+        "nodeProjection": ["Person"],
+        "relationshipProjection": {
+          "COLLABORATED_WITH": {
+            "orientation": "UNDIRECTED"
+          }
+        }
+      },
+      "parameters": {
+        "triangleCountProperty": "triangles"
+      },
+      "writeProperty": "lcc"
+    }
+  ]
+}

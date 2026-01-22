@@ -1,0 +1,136 @@
+{
+  "name": "academic-papers-kg-pipeline",
+  "description": "Knowledge graph extraction pipeline for academic papers with entity resolution and embeddings",
+  "components": [
+    {
+      "type": "EntityExtractor",
+      "name": "extract-entities",
+      "config": {
+        "llmProvider": "openai",
+        "model": "gpt-4",
+        "entities": [
+          {
+            "label": "Document",
+            "description": "Academic papers, articles, and research publications"
+          },
+          {
+            "label": "Person",
+            "description": "Authors and researchers"
+          },
+          {
+            "label": "Concept",
+            "description": "Research topics, keywords, methodologies, and scientific concepts"
+          },
+          {
+            "label": "Institution",
+            "description": "Universities, research labs, and organizations"
+          }
+        ],
+        "relationships": [
+          {
+            "type": "AUTHORED",
+            "description": "Person authored a Document",
+            "source": "Person",
+            "target": "Document"
+          },
+          {
+            "type": "CITES",
+            "description": "Document cites another Document",
+            "source": "Document",
+            "target": "Document"
+          },
+          {
+            "type": "STUDIES",
+            "description": "Document studies a Concept",
+            "source": "Document",
+            "target": "Concept"
+          },
+          {
+            "type": "AFFILIATED_WITH",
+            "description": "Person is affiliated with an Institution",
+            "source": "Person",
+            "target": "Institution"
+          }
+        ],
+        "promptTemplate": "Extract entities and relationships from this academic paper. Focus on authors, institutions, concepts, and citations.\n\nText: {text}\n\nReturn structured entities and relationships."
+      }
+    },
+    {
+      "type": "TextSplitter",
+      "name": "split-documents",
+      "config": {
+        "chunkSize": 500,
+        "chunkOverlap": 50,
+        "separator": "\n\n"
+      }
+    },
+    {
+      "type": "TextEmbedder",
+      "name": "embed-chunks",
+      "config": {
+        "embeddingProvider": "openai",
+        "model": "text-embedding-3-small",
+        "dimensions": 384,
+        "batchSize": 100,
+        "nodeProperty": "embedding",
+        "textProperties": [
+          "title",
+          "abstract",
+          "content"
+        ]
+      }
+    },
+    {
+      "type": "EntityResolver",
+      "name": "resolve-entities",
+      "config": {
+        "method": "fuzzy",
+        "threshold": 0.85,
+        "resolveLabels": [
+          "Person",
+          "Concept",
+          "Institution"
+        ],
+        "matchProperties": {
+          "Person": [
+            "name",
+            "email",
+            "orcid"
+          ],
+          "Concept": [
+            "name"
+          ],
+          "Institution": [
+            "name"
+          ]
+        },
+        "mergeStrategy": "merge_properties"
+      }
+    }
+  ],
+  "execution": {
+    "order": [
+      "split-documents",
+      "extract-entities",
+      "resolve-entities",
+      "embed-chunks"
+    ],
+    "onError": "continue",
+    "batchSize": 50
+  },
+  "output": {
+    "nodeLabels": [
+      "Document",
+      "Person",
+      "Concept",
+      "Institution"
+    ],
+    "relationshipTypes": [
+      "AUTHORED",
+      "CITES",
+      "STUDIES",
+      "AFFILIATED_WITH"
+    ],
+    "statistics": true
+  }
+}

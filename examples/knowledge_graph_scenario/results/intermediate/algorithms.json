@@ -1,0 +1,211 @@
+{
+  "algorithms": [
+    {
+      "name": "paper-influence-pagerank",
+      "description": "PageRank algorithm to compute influence scores for academic papers based on citation network",
+      "algorithm": "pageRank",
+      "graphProjection": {
+        "name": "citation-network",
+        "nodeProjection": [
+          "Document"
+        ],
+        "relationshipProjection": {
+          "CITES": {
+            "type": "CITES",
+            "orientation": "NATURAL",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "dampingFactor": 0.85,
+        "maxIterations": 20,
+        "tolerance": 0.0000001,
+        "writeProperty": "influenceScore"
+      },
+      "mode": "write",
+      "writeConfig": {
+        "writeProperty": "influenceScore"
+      }
+    },
+    {
+      "name": "research-communities-louvain",
+      "description": "Louvain community detection to identify research communities based on co-authorship and citation patterns",
+      "algorithm": "louvain",
+      "graphProjection": {
+        "name": "research-network",
+        "nodeProjection": [
+          "Document",
+          "Person",
+          "Concept"
+        ],
+        "relationshipProjection": {
+          "AUTHORED": {
+            "type": "AUTHORED",
+            "orientation": "UNDIRECTED",
+            "properties": {}
+          },
+          "CITES": {
+            "type": "CITES",
+            "orientation": "UNDIRECTED",
+            "properties": {}
+          },
+          "STUDIES": {
+            "type": "STUDIES",
+            "orientation": "UNDIRECTED",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "maxLevels": 10,
+        "maxIterations": 10,
+        "tolerance": 0.0001,
+        "includeIntermediateCommunities": false,
+        "seedProperty": null,
+        "writeProperty": "communityId"
+      },
+      "mode": "write",
+      "writeConfig": {
+        "writeProperty": "communityId"
+      }
+    },
+    {
+      "name": "author-collaboration-strength",
+      "description": "Node similarity to find authors with similar research patterns",
+      "algorithm": "nodeSimilarity",
+      "graphProjection": {
+        "name": "collaboration-network",
+        "nodeProjection": [
+          "Person"
+        ],
+        "relationshipProjection": {
+          "COAUTHOR": {
+            "type": "AUTHORED",
+            "orientation": "UNDIRECTED",
+            "aggregation": "COUNT",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "similarityCutoff": 0.1,
+        "degreeCutoff": 1,
+        "topK": 10,
+        "writeRelationshipType": "SIMILAR_TO",
+        "writeProperty": "similarity"
+      },
+      "mode": "write",
+      "writeConfig": {
+        "writeRelationshipType": "SIMILAR_TO",
+        "writeProperty": "similarity"
+      }
+    },
+    {
+      "name": "concept-centrality-betweenness",
+      "description": "Betweenness centrality to identify bridging concepts between research areas",
+      "algorithm": "betweenness",
+      "graphProjection": {
+        "name": "concept-network",
+        "nodeProjection": [
+          "Concept"
+        ],
+        "relationshipProjection": {
+          "CO_STUDIED": {
+            "type": "STUDIES",
+            "orientation": "UNDIRECTED",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "writeProperty": "betweennessCentrality"
+      },
+      "mode": "write",
+      "writeConfig": {
+        "writeProperty": "betweennessCentrality"
+      }
+    },
+    {
+      "name": "citation-prediction-link-prediction",
+      "description": "Link prediction using Adamic Adar to predict potential citations",
+      "algorithm": "linkPrediction.adamicAdar",
+      "graphProjection": {
+        "name": "citation-network",
+        "nodeProjection": [
+          "Document"
+        ],
+        "relationshipProjection": {
+          "CITES": {
+            "type": "CITES",
+            "orientation": "UNDIRECTED",
+            "properties": {}
+          }
+        }
+      },
+      "parameters": {
+        "topK": 20,
+        "threshold": 0.5
+      },
+      "mode": "stream"
+    }
+  ],
+  "graphProjections": [
+    {
+      "name": "citation-network",
+      "type": "native",
+      "nodeProjections": [
+        "Document"
+      ],
+      "relationshipProjections": [
+        {
+          "type": "CITES",
+          "orientation": "NATURAL"
+        }
+      ]
+    },
+    {
+      "name": "research-network",
+      "type": "native",
+      "nodeProjections": [
+        "Document",
+        "Person",
+        "Concept"
+      ],
+      "relationshipProjections": [
+        {
+          "type": "AUTHORED",
+          "orientation": "UNDIRECTED"
+        },
+        {
+          "type": "CITES",
+          "orientation": "UNDIRECTED"
+        },
+        {
+          "type": "STUDIES",
+          "orientation": "UNDIRECTED"
+        }
+      ]
+    },
+    {
+      "name": "collaboration-network",
+      "type": "native",
+      "nodeProjections": [
+        "Person"
+      ],
+      "relationshipProjections": [
+        {
+          "type": "AUTHORED",
+          "orientation": "UNDIRECTED",
+          "aggregation": "COUNT"
+        }
+      ]
+    },
+    {
+      "name": "concept-network",
+      "type": "cypher",
+      "nodeQuery": "MATCH (c:Concept) RETURN id(c) AS id",
+      "relationshipQuery": "MATCH (c1:Concept)<-[:STUDIES]-(d:Document)-[:STUDIES]->(c2:Concept) WHERE c1 <> c2 RETURN id(c1) AS source, id(c2) AS target, count(d) AS weight"
+    }
+  ]
+}

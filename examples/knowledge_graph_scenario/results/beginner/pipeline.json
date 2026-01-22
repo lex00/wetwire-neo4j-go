@@ -1,0 +1,214 @@
+{
+  "name": "research-paper-kg-pipeline",
+  "description": "Complete knowledge graph pipeline for research paper entity extraction and relationship detection",
+  "version": "1.0.0",
+  "steps": [
+    {
+      "name": "entity-extraction",
+      "type": "entityExtraction",
+      "description": "Extract named entities from paper text",
+      "config": {
+        "entityTypes": [
+          {
+            "type": "Person",
+            "patterns": ["PERSON", "AUTHOR"],
+            "fields": ["name", "affiliation"]
+          },
+          {
+            "type": "Institution",
+            "patterns": ["ORG", "UNIVERSITY", "INSTITUTION"],
+            "fields": ["name", "country", "type"]
+          },
+          {
+            "type": "Concept",
+            "patterns": ["TOPIC", "KEYWORD", "CONCEPT"],
+            "fields": ["name", "description", "category"]
+          }
+        ],
+        "sourceFields": ["title", "abstract", "content"],
+        "model": "en_core_sci_lg",
+        "confidence": 0.7
+      }
+    },
+    {
+      "name": "embedding-generation",
+      "type": "embeddings",
+      "description": "Generate vector embeddings for semantic search",
+      "config": {
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "dimensions": 384,
+        "nodeTypes": [
+          {
+            "label": "Document",
+            "properties": ["title", "abstract"],
+            "targetProperty": "embedding"
+          },
+          {
+            "label": "Concept",
+            "properties": ["name", "description"],
+            "targetProperty": "embedding"
+          }
+        ],
+        "batchSize": 32,
+        "normalize": true
+      }
+    },
+    {
+      "name": "relationship-extraction",
+      "type": "relationshipExtraction",
+      "description": "Extract relationships between entities",
+      "config": {
+        "relationships": [
+          {
+            "type": "AUTHORED",
+            "source": "Person",
+            "target": "Document",
+            "properties": ["position", "isCorresponding"],
+            "extractionMethod": "metadata"
+          },
+          {
+            "type": "CITES",
+            "source": "Document",
+            "target": "Document",
+            "properties": ["context", "section"],
+            "extractionMethod": "citation-parser"
+          },
+          {
+            "type": "STUDIES",
+            "source": "Document",
+            "target": "Concept",
+            "properties": ["relevance", "frequency"],
+            "extractionMethod": "keyword-extraction"
+          },
+          {
+            "type": "AFFILIATED_WITH",
+            "source": "Person",
+            "target": "Institution",
+            "properties": ["startDate", "endDate", "position"],
+            "extractionMethod": "affiliation-parser"
+          }
+        ],
+        "confidence": 0.8
+      }
+    },
+    {
+      "name": "co-occurrence-detection",
+      "type": "coOccurrence",
+      "description": "Detect co-occurring entities for implicit relationships",
+      "config": {
+        "pairs": [
+          {
+            "type": "COLLABORATED_WITH",
+            "nodeType": "Person",
+            "sharedRelationship": "AUTHORED",
+            "sharedTarget": "Document",
+            "minOccurrences": 1,
+            "properties": {
+              "collaborationCount": "count"
+            }
+          },
+          {
+            "type": "CO_OCCURS",
+            "nodeType": "Concept",
+            "sharedRelationship": "STUDIES",
+            "sharedSource": "Document",
+            "minOccurrences": 2,
+            "properties": {
+              "coOccurrenceCount": "count"
+            }
+          },
+          {
+            "type": "COLLABORATES_WITH",
+            "nodeType": "Institution",
+            "sharedRelationship": "AFFILIATED_WITH",
+            "sharedSource": "Person",
+            "minOccurrences": 3,
+            "properties": {
+              "jointAuthors": "count"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "citation-enrichment",
+      "type": "enrichment",
+      "description": "Enrich documents with citation metrics",
+      "config": {
+        "metrics": [
+          {
+            "name": "citationCount",
+            "query": "MATCH (d:Document)<-[:CITES]-(citing) RETURN count(citing) as count",
+            "targetProperty": "citationCount"
+          },
+          {
+            "name": "influenceScore",
+            "query": "MATCH (d:Document)<-[:CITES*1..2]-(citing) RETURN count(DISTINCT citing) as count",
+            "targetProperty": "influenceScore"
+          },
+          {
+            "name": "referencedCount",
+            "query": "MATCH (d:Document)-[:CITES]->(cited) RETURN count(cited) as count",
+            "targetProperty": "referenceCount"
+          }
+        ],
+        "targetNodeType": "Document"
+      }
+    },
+    {
+      "name": "graph-algorithms",
+      "type": "graphAlgorithms",
+      "description": "Run graph algorithms for community detection and influence",
+      "config": {
+        "algorithms": [
+          "citation-pagerank",
+          "author-communities",
+          "concept-similarity",
+          "weakly-connected-components"
+        ],
+        "executionOrder": "sequential",
+        "writeBack": true
+      }
+    },
+    {
+      "name": "quality-validation",
+      "type": "validation",
+      "description": "Validate data quality and completeness",
+      "config": {
+        "rules": [
+          {
+            "name": "unique-document-ids",
+            "query": "MATCH (d:Document) RETURN d.id, count(*) as c WHERE c > 1",
+            "severity": "error"
+          },
+          {
+            "name": "documents-have-embeddings",
+            "query": "MATCH (d:Document) WHERE d.embedding IS NULL RETURN count(d)",
+            "threshold": 0,
+            "severity": "warning"
+          },
+          {
+            "name": "authors-have-affiliations",
+            "query": "MATCH (p:Person) WHERE NOT (p)-[:AFFILIATED_WITH]->() RETURN count(p)",
+            "threshold": 10,
+            "severity": "info"
+          }
+        ]
+      }
+    }
+  ],
+  "scheduling": {
+    "mode": "batch",
+    "batchSize": 100,
+    "parallelism": 4,
+    "errorHandling": "continue"
+  },
+  "outputs": {
+    "exportFormat": "neo4j",
+    "statistics": true,
+    "logging": {
+      "level": "info",
+      "logFile": "pipeline.log"
+    }
+  }
+}

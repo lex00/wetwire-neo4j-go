@@ -1,4 +1,7 @@
-# Examples Reference
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
+  <img src="./wetwire-light.svg" width="100" height="67">
+</picture>
 
 The `examples/` directory contains reference implementations demonstrating wetwire-neo4j patterns. These serve as:
 

@@ -1,4 +1,7 @@
-# Examples
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../docs/wetwire-dark.svg">
+  <img src="../docs/wetwire-light.svg" width="100" height="67">
+</picture>
 
 This directory contains reference examples demonstrating wetwire-neo4j-go features.
 

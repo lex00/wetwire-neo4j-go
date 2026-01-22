@@ -1,0 +1,73 @@
+{
+  "name": "academic-papers-hybrid-retriever",
+  "description": "Hybrid search retriever combining vector similarity and fulltext search for academic papers",
+  "type": "HybridRetriever",
+  "config": {
+    "vectorIndex": {
+      "indexName": "document_embedding",
+      "embeddingProvider": "openai",
+      "embeddingModel": "text-embedding-3-small",
+      "dimensions": 384,
+      "similarityFunction": "cosine",
+      "topK": 10,
+      "weight": 0.6
+    },
+    "fulltextIndex": {
+      "indexName": "document_content",
+      "queryProperties": [
+        "title",
+        "abstract",
+        "content"
+      ],
+      "topK": 10,
+      "weight": 0.4,
+      "fuzzy": true,
+      "fuzzyDistance": 2
+    },
+    "nodeLabel": "Document",
+    "returnProperties": [
+      "id",
+      "title",
+      "abstract",
+      "year",
+      "type",
+      "authors",
+      "doi"
+    ],
+    "filters": {
+      "yearMin": null,
+      "yearMax": null,
+      "type": null,
+      "concepts": []
+    },
+    "reranking": {
+      "enabled": false,
+      "method": "llm",
+      "model": "gpt-4",
+      "topK": 10
+    },
+    "includeContext": true,
+    "contextConfig": {
+      "includeCitations": true,
+      "includeAuthors": true,
+      "includeConcepts": true,
+      "maxCitations": 5,
+      "maxAuthors": 10,
+      "maxConcepts": 5
+    }
+  },
+  "query": {
+    "cypher": "CALL {\n  CALL db.index.vector.queryNodes($vectorIndexName, $topK, $queryEmbedding)\n  YIELD node, score\n  RETURN node, score * $vectorWeight as finalScore\n  UNION\n  CALL db.index.fulltext.queryNodes($fulltextIndexName, $searchQuery)\n  YIELD node, score\n  RETURN node, score * $fulltextWeight as finalScore\n}\nWITH node, sum(finalScore) as combinedScore\nWHERE ($yearMin IS NULL OR node.year >= $yearMin)\n  AND ($yearMax IS NULL OR node.year <= $yearMax)\n  AND ($type IS NULL OR node.type = $type)\nOPTIONAL MATCH (node)<-[:AUTHORED]-(author:Person)\nOPTIONAL MATCH (node)-[:STUDIES]->(concept:Concept)\nOPTIONAL MATCH (node)-[:CITES]->(citation:Document)\nRETURN node.id as id,\n       node.title as title,\n       node.abstract as abstract,\n       node.year as year,\n       node.type as type,\n       node.doi as doi,\n       combinedScore,\n       collect(DISTINCT author.name)[..10] as authors,\n       collect(DISTINCT concept.name)[..5] as concepts,\n       collect(DISTINCT {id: citation.id, title: citation.title})[..5] as citations\nORDER BY combinedScore DESC\nLIMIT $limit",
+    "parameters": {
+      "vectorIndexName": "document_embedding",
+      "fulltextIndexName": "document_content",
+      "vectorWeight": 0.6,
+      "fulltextWeight": 0.4,
+      "topK": 10,
+      "limit": 10,
+      "yearMin": null,
+      "yearMax": null,
+      "type": null
+    }
+  }
+}

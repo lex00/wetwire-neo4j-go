@@ -1,4 +1,7 @@
-# Quick Start Guide
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
+  <img src="./wetwire-light.svg" width="100" height="67">
+</picture>
 
 This guide walks you through creating your first Neo4j configuration with wetwire-neo4j-go.
 
