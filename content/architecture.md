@@ -2,10 +2,6 @@
 title: "Architecture"
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
-  <img src="./wetwire-light.svg" width="100" height="67">
-</picture>
 
 This document describes the architecture of wetwire-neo4j-go, a synthesis library for Neo4j that generates Cypher statements and JSON configurations from native Go definitions.
 

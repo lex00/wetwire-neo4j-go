@@ -2,10 +2,6 @@
 title: "CLI"
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
-  <img src="./wetwire-light.svg" width="100" height="67">
-</picture>
 
 wetwire-neo4j-go provides a command-line interface for building, linting, and managing Neo4j configuration definitions.
 

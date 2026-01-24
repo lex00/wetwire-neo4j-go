@@ -2,10 +2,6 @@
 title: "Import Workflow"
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
-  <img src="./wetwire-light.svg" width="100" height="67">
-</picture>
 
 This document explains the Cypher import workflow used by wetwire-neo4j-go to convert existing Neo4j schemas and configurations into Go code.
 

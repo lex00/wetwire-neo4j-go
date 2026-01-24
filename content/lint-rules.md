@@ -2,10 +2,6 @@
 title: "Lint Rules"
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
-  <img src="./wetwire-light.svg" width="100" height="67">
-</picture>
 
 wetwire-neo4j-go includes lint rules to validate Neo4j configurations before deployment. All rules use the `WN4xxx` prefix.
 
