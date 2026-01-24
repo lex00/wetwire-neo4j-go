@@ -1,58 +1,42 @@
 ---
-title: "Home"
+title: "Wetwire Neo4j"
 ---
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./wetwire-dark.svg">
-  <img src="./wetwire-light.svg" width="100" height="67">
-</picture>
+[![Go Reference](https://pkg.go.dev/badge/github.com/lex00/wetwire-neo4j-go.svg)](https://pkg.go.dev/github.com/lex00/wetwire-neo4j-go)
+[![CI](https://github.com/lex00/wetwire-neo4j-go/actions/workflows/ci.yml/badge.svg)](https://github.com/lex00/wetwire-neo4j-go/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Navigate the wetwire-neo4j-go documentation by your goal.
+Generate Neo4j Cypher queries and graph pipelines from Go structs with AI-assisted design.
 
-## Quick Links
+## Philosophy
 
-| Goal | Document |
-|------|----------|
-| Get started in 5 minutes | [QUICK_START.md](quick-start/) |
-| Find a CLI command | [CLI.md](cli/) |
-| Understand a lint rule | [LINT_RULES.md](lint-rules/) |
-| Migrate existing schemas | [IMPORT_WORKFLOW.md](import-workflow/) |
+Wetwire uses typed constraints to reduce the model capability required for accurate code generation.
 
-## By Audience
+**Core hypothesis:** Typed input + smaller model ≈ Semantic input + larger model
 
-### New Users
-1. [QUICK_START.md](quick-start/) - Build your first Neo4j schema
-2. [FAQ.md](faq/) - Common questions and troubleshooting
-3. [EXAMPLES.md](examples/) - Real-world schema patterns
+The type system and lint rules act as a force multiplier — cheaper models produce quality output when guided by schema-generated types and iterative lint feedback.
 
-### Regular Users
-- [CLI.md](cli/) - Complete command reference
-- [LINT_RULES.md](lint-rules/) - All WN4 rules with examples
+## Documentation
 
-### Team Adoption
-- [ADOPTION.md](adoption/) - Migration strategies and team onboarding
-- [IMPORT_WORKFLOW.md](import-workflow/) - Convert existing Cypher schemas
+| Document | Description |
+|----------|-------------|
+| [CLI Reference]({{< relref "/cli" >}}) | Command-line interface |
+| [Quick Start]({{< relref "/quick-start" >}}) | Get started in 5 minutes |
+| [Examples]({{< relref "/examples" >}}) | Sample graph projects |
+| [FAQ]({{< relref "/faq" >}}) | Frequently asked questions |
 
-### Contributors
-- [DEVELOPERS.md](developers/) - Development setup and guidelines
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Pull request process
-- [INTERNALS.md](internals/) - Architecture deep-dive
-- [ARCHITECTURE.md](architecture/) - System design
-- [CODEGEN.md](codegen/) - Type generation
+## Installation
 
-## All Documents
+```bash
+go install github.com/lex00/wetwire-neo4j-go@latest
+```
 
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [QUICK_START.md](quick-start/) | 5-minute getting started guide | New users |
-| [CLI.md](cli/) | Command reference (build, lint, import, etc.) | All users |
-| [LINT_RULES.md](lint-rules/) | WN4001-WN4069 rule reference | All users |
-| [FAQ.md](faq/) | Common questions and troubleshooting | All users |
-| [EXAMPLES.md](examples/) | Schema patterns and examples | Learning users |
-| [ADOPTION.md](adoption/) | Team migration and onboarding | Team leads |
-| [IMPORT_WORKFLOW.md](import-workflow/) | Convert existing schemas | Migrating users |
-| [DEVELOPERS.md](developers/) | Development setup | Contributors |
-| [ARCHITECTURE.md](architecture/) | System design | Contributors |
-| [INTERNALS.md](internals/) | Implementation details | Contributors |
-| [CODEGEN.md](codegen/) | Type generation | Contributors |
-| [VERSIONING.md](versioning/) | Version policy and compatibility | Maintainers |
+## Quick Example
+
+```go
+var FindUsers = cypher.Query{
+    Match:  "(u:User)-[:FOLLOWS]->(f:User)",
+    Where:  "u.active = true",
+    Return: "u.name, count(f) as followers",
+}
+```
